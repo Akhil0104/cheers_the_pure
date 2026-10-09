@@ -1,0 +1,158 @@
+{% extends 'app/base.html' %}
+{% load static %}
+
+{% block title %}{{ product.name }} - CheersThePure{% endblock %}
+
+{% block content %}
+<section class="section product-detail-section">
+    <div class="section-header">
+        <h1>{{ product.name }}</h1>
+        <p class="product-meta">
+            {{ product.capacity }}
+            {% if is_b2b_user and not request.user.is_staff %}
+                • Bulk pricing on request
+            {% else %}
+            • 
+            {% if product.capacity == '250 ml' %}
+                Price: ₹140
+            {% elif product.capacity == '500 ml' %}
+                Price: TBD
+            {% elif product.capacity == '1000 ml' or product.capacity == '1 Ltr' %}
+                Price: ₹120
+            {% elif product.capacity == '2 litres' %}
+                Price: TBD
+            {% else %}
+                Price: ₹{{ product.price|floatformat:2 }}
+            {% endif %}
+            {% endif %}
+            {% if product.category %} • {{ product.category.name }}{% endif %}
+        </p>
+        <p class="product-tray">
+            {% if product.capacity == '250 ml' %}1 tray = 18 pieces
+            {% elif product.capacity == '500 ml' %}1 tray = 18 bottles
+            {% elif product.capacity == '1000 ml' or product.capacity == '1 Ltr' %}1 tray = 12 bottles
+            {% elif product.capacity == '2 litres' %}1 tray = 6 bottles
+            {% else %}1 tray = 12 bottles
+            {% endif %}
+        </p>
+    </div>
+    <div class="product-detail-card">
+        <div class="product-detail-media">
+            {% if product.image %}
+                <img class="product-detail-image" src="{{ product.image.url }}" alt="{{ product.name }}" onerror="this.onerror=null; this.outerHTML='<div class=&quot;glass-image-placeholder glass-image-placeholder-large&quot;><span class=&quot;water-bottle-icon&quot;>💧</span></div>';" />
+            {% elif product.image_url %}
+                <img class="product-detail-image" src="{{ product.image_url }}" alt="{{ product.name }}" onerror="this.onerror=null; this.outerHTML='<div class=&quot;glass-image-placeholder glass-image-placeholder-large&quot;><span class=&quot;water-bottle-icon&quot;>💧</span></div>';" />
+            {% else %}
+                <div class="glass-image-placeholder glass-image-placeholder-large">
+                    <span class="water-bottle-icon">💧</span>
+                </div>
+            {% endif %}
+        </div>
+        <div class="product-detail-copy">
+            <p>{{ product.description|default:"No description available yet. Please contact us for more details." }}</p>
+            <div class="product-actions">
+                {% if request.user.is_authenticated %}
+                    {% if is_b2c_user or request.user.is_staff %}
+                        <form method="post" action="{% url 'add_to_cart' product.pk %}" class="d-inline b2c-add-to-cart-form">
+                            {% csrf_token %}
+                            <label for="quantity">Quantity</label>
+                            <input type="number" name="quantity" id="quantity" value="1" min="1" class="form-control" style="width:80px; display:inline-block; margin-right:8px;" />
+                            <button type="submit" class="button">Add to cart</button>
+                        </form>
+                    {% elif is_b2b_user %}
+                        <p class="product-b2b-note" style="margin-bottom: 1rem; color: #0369a1;">
+                            Bulk pricing available — request a custom quote for your company.
+                        </p>
+                        <a class="button" href="{% url 'order_request_product' product.pk %}">Request Bulk Quote</a>
+                    {% endif %}
+                {% else %}
+                    <a class="button" href="{% url 'login' %}?next={% url 'product_detail' product.pk %}">Login to Shop or Quote</a>
+                {% endif %}
+                <a class="button button-secondary" href="{% url 'products' %}">Back to products</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% block extra_scripts %}
+<script>
+(function() {
+  const form = document.querySelector('.b2c-add-to-cart-form');
+  if (!form) return;
+  
+  /* Custom toast notification helper */
+  function showToast(message) {
+    let toast = document.getElementById('glass-toast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'glass-toast';
+      toast.style.cssText = `
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        background: rgba(255, 255, 255, 0.45);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+        padding: 1rem 2rem;
+        border-radius: 1rem;
+        color: #0c1a40;
+        font-weight: 700;
+        z-index: 1000;
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.3s ease, transform 0.3s ease;
+      `;
+      document.body.appendChild(toast);
+    }
+    toast.textContent = message;
+    toast.style.opacity = '1';
+    toast.style.transform = 'translateY(0)';
+    setTimeout(function() {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(20px)';
+    }, 3000);
+  }
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(form);
+    
+    fetch(form.action, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.success) {
+        // Update nav badge
+        let badge = document.querySelector('.nav-cart-badge');
+        if (!badge) {
+          const navCart = document.getElementById('nav-cart');
+          if (navCart) {
+            badge = document.createElement('span');
+            badge.className = 'nav-cart-badge';
+            navCart.appendChild(badge);
+          }
+        }
+        if (badge) {
+          badge.textContent = data.cart_count;
+        }
+        showToast('💧 Added to your cart successfully!');
+      } else {
+        alert(data.error || 'Failed to add item to cart.');
+      }
+    })
+    .catch(function(err) {
+      console.error('Error adding to cart:', err);
+      alert('Error adding to cart. Please try again.');
+    });
+  });
+})();
+</script>
+{% endblock %}
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends 'app/base.html' %}
+
+{% block title %}Authentication Required - CheersThePure{% endblock %}
+
+{% block content %}
+<section class="section auth-section centered-form center-text" style="padding: 3rem 2rem;">
+    <div class="step-badge" style="background: var(--accent); margin: 0 auto 1.5rem; width: 3.5rem; height: 3.5rem; font-size: 1.5rem; display: flex; align-items: center; justify-content: center;">
+        🔒
+    </div>
+    <h1 style="color: var(--fg); font-size: 1.85rem; margin-bottom: 0.75rem;">Registration Required</h1>
+    <p style="color: var(--muted); line-height: 1.6; margin-bottom: 2rem; max-width: 440px; margin-left: auto; margin-right: auto;">
+        To request custom product quotes, specify capacities, check estimates, and track your orders in real-time, please register or log in to your account.
+    </p>
+    
+    <div style="display: flex; flex-direction: column; gap: 0.75rem; max-width: 280px; margin: 0 auto;">
+        <a class="button" href="{% url 'login' %}?next={% url 'order_request' %}">Log In to Account</a>
+        <a class="button button-secondary" href="{% url 'register' %}">Create New Account</a>
+    </div>
+</section>
+{% endblock %}

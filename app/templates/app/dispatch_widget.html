@@ -1,0 +1,84 @@
+{% load static %}
+{# DispatchAI Chat Widget — Include with: {% include "app/dispatch_widget.html" %} #}
+{# Only renders for authenticated B2B users and staff. #}
+
+{% if request.user.is_authenticated %}
+  {% with profile=request.user.profile %}
+    {% if profile.account_type == 'b2b' or request.user.is_staff %}
+
+      {# ── Stylesheets ─────────────────────────────────────────────── #}
+      <link rel="stylesheet" href="{% static 'app/dispatch_chat.css' %}">
+
+      {# ── Floating Panel HTML ──────────────────────────────────────── #}
+      <div id="dispatch-panel" role="dialog" aria-label="DispatchAI Supply Assistant" aria-hidden="true">
+
+        {# Header #}
+        <div class="dai-header">
+          <div class="dai-header-main">
+            <div class="dai-avatar">🤖</div>
+            <div class="dai-header-title-wrap">
+              <h3>
+                DispatchAI
+                <span class="dai-online-badge">Online</span>
+              </h3>
+              <div class="dai-header-desc">B2B Supply &amp; Distribution Assistant</div>
+            </div>
+          </div>
+          <div class="dai-header-actions">
+            <button class="dai-reset-btn" type="button" title="Start new conversation">↺ New</button>
+            <button class="dai-header-close" id="dispatch-close" aria-label="Close chat">✕</button>
+          </div>
+        </div>
+
+        {# Suggested Business Prompts #}
+        <div class="dai-prompts-bar">
+          <span class="dai-prompts-label">Quick Prompts:</span>
+          <div class="dai-prompts-container">
+            <button type="button" class="dai-prompt-chip" data-prompt="Show my recent order history.">📋 Order History</button>
+            <button type="button" class="dai-prompt-chip" data-prompt="Do you remember my delivery preference?">🚚 Delivery Preference</button>
+            <button type="button" class="dai-prompt-chip" data-prompt="I need my usual order again.">🔄 Usual Order</button>
+            <button type="button" class="dai-prompt-chip" data-prompt="What products are available?">📦 Catalog</button>
+            <button type="button" class="dai-prompt-chip" data-prompt="Prepare a quote for my next order.">💬 Prepare Quote</button>
+          </div>
+        </div>
+
+        {# Messages area #}
+        <div class="dai-messages" id="dispatch-messages" role="log" aria-live="polite" aria-atomic="false">
+          {# Messages injected dynamically by JS #}
+        </div>
+
+        {# Input area #}
+        <div class="dai-input-area">
+          {% csrf_token %}
+          <div class="dai-input-wrapper">
+            <textarea
+              class="dai-input"
+              id="dispatch-input"
+              placeholder="Ask about volume pricing, stock, delivery rules..."
+              rows="1"
+              aria-label="Message to DispatchAI"
+              maxlength="4000"
+            ></textarea>
+            <div class="dai-input-hint">Press Enter to send, Shift+Enter for new line</div>
+          </div>
+          <button class="dai-send-btn" id="dispatch-send" aria-label="Send message" type="button" disabled>
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      {# ── Launcher Button ─────────────────────────────────────────── #}
+      <button id="dispatch-launcher" aria-label="Open DispatchAI assistant" type="button" title="Open DispatchAI Assistant">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
+        </svg>
+      </button>
+
+      {# ── Scripts ────────────────────────────────────────────────── #}
+      <script src="{% static 'app/dispatch_chat.js' %}"></script>
+
+    {% endif %}
+  {% endwith %}
+{% endif %}

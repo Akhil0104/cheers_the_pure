@@ -1,0 +1,534 @@
+{% extends 'app/base.html' %}
+
+{% block title %}Quote Tracker - CheersThePure{% endblock %}
+
+{% block content %}
+<section class="section tracker-section">
+    <div class="section-header">
+        <span class="eyebrow">Client Portal</span>
+        <h1>Quote Request Tracker</h1>
+        <p>Real-time updates for your product order estimate request.</p>
+    </div>
+
+    <!-- Progress Tracker Bar -->
+    <div class="tracker-progress-container" style="margin: 2.5rem 0 3.5rem;">
+        {% with s=quote_request.status %}
+        <div class="tracker-steps" style="display: flex; justify-content: space-between; position: relative; max-width: 800px; margin: 0 auto;">
+            <!-- Line connector -->
+            <div style="position: absolute; top: 1.2rem; left: 0; right: 0; height: 4px; background: #e2e8f0; z-index: 1;"></div>
+            <div style="position: absolute; top: 1.2rem; left: 0; height: 4px; background: var(--accent); z-index: 2; transition: width 0.4s ease;
+                width: {% if s == 'pending' %}0%{% elif s == 'contacted' %}33.3%{% elif s == 'quoted' %}66.6%{% elif s == 'completed' %}100%{% endif %};">
+            </div>
+
+            <!-- Steps -->
+            <div class="tracker-step {% if s == 'pending' or s == 'contacted' or s == 'quoted' or s == 'completed' %}active{% endif %}" style="z-index: 3; text-align: center;">
+                <div class="step-icon" style="width: 2.4rem; height: 2.4rem; border-radius: 50%; background: {% if s == 'pending' or s == 'contacted' or s == 'quoted' or s == 'completed' %}var(--accent){% else %}#cbd5e1{% endif %}; color: #fff; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.5rem; font-weight: bold; border: 4px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">1</div>
+                <span style="font-size: 0.85rem; font-weight: 600; color: var(--fg);">Pending Review</span>
+            </div>
+
+            <div class="tracker-step {% if s == 'contacted' or s == 'quoted' or s == 'completed' %}active{% endif %}" style="z-index: 3; text-align: center;">
+                <div class="step-icon" style="width: 2.4rem; height: 2.4rem; border-radius: 50%; background: {% if s == 'contacted' or s == 'quoted' or s == 'completed' %}var(--accent){% else %}#cbd5e1{% endif %}; color: #fff; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.5rem; font-weight: bold; border: 4px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">2</div>
+                <span style="font-size: 0.85rem; font-weight: 600; color: var(--fg);">Contacted</span>
+            </div>
+
+            <div class="tracker-step {% if s == 'quoted' or s == 'completed' %}active{% endif %}" style="z-index: 3; text-align: center;">
+                <div class="step-icon" style="width: 2.4rem; height: 2.4rem; border-radius: 50%; background: {% if s == 'quoted' or s == 'completed' %}var(--accent){% else %}#cbd5e1{% endif %}; color: #fff; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.5rem; font-weight: bold; border: 4px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">3</div>
+                <span style="font-size: 0.85rem; font-weight: 600; color: var(--fg);">Quote Provided</span>
+            </div>
+
+            <div class="tracker-step {% if s == 'completed' %}active{% endif %}" style="z-index: 3; text-align: center;">
+                <div class="step-icon" style="width: 2.4rem; height: 2.4rem; border-radius: 50%; background: {% if s == 'completed' %}var(--accent){% else %}#cbd5e1{% endif %}; color: #fff; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.5rem; font-weight: bold; border: 4px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">4</div>
+                <span style="font-size: 0.85rem; font-weight: 600; color: var(--fg);">Completed</span>
+            </div>
+        </div>
+        {% endwith %}
+    </div>
+
+    <!-- Content Layout -->
+    <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 2rem; margin-top: 2rem;">
+        
+        <!-- Left Column: Proposals & Admin Replies -->
+        <div>
+            <div class="overview-card" style="margin-bottom: 2rem; border-color: #e5e7eb;">
+                <h2 style="margin-top: 0; border-bottom: 2px solid #f1f5f9; padding-bottom: 0.75rem; font-size: 1.35rem; color: var(--fg);">
+                    Proposals & Estimates
+                </h2>
+                
+                {% if replies %}
+                    <div style="display: flex; flex-direction: column; gap: 1.5rem; margin-top: 1rem;">
+                        {% for reply in replies %}
+                            <div class="testimonial-card" style="background: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.02); padding: 1.5rem; border-left-color: var(--accent);">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                                    <div>
+                                        <h3 style="margin: 0; font-size: 1.05rem; color: var(--fg);">Proposal from {{ reply.admin_name }}</h3>
+                                        <span style="font-size: 0.8rem; color: var(--muted);">Submitted on {{ reply.created_at|date:"M d, Y H:i" }}</span>
+                                    </div>
+                                    
+                                    {% if reply.price_per_unit %}
+                                        <div style="text-align: right;">
+                                            <span style="font-size: 1.25rem; font-weight: 700; color: var(--accent); display: block;">
+                                                ₹{{ reply.price_per_unit|floatformat:2 }}/unit
+                                            </span>
+                                            <span style="font-size: 0.8rem; color: var(--muted); font-weight: 600;">
+                                                Est. Total: ₹{{ reply.total_price|floatformat:2|default:"N/A" }}
+                                            </span>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <p style="color: var(--fg); line-height: 1.6; font-style: normal; margin-bottom: 1rem;">
+                                    {{ reply.message|linebreaksbr }}
+                                </p>
+                                
+                                {% if reply.estimated_delivery %}
+                                    <div style="background: #f8fafc; padding: 0.75rem 1rem; border-radius: 0.5rem; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 0.5rem;">
+                                        <span style="font-weight: 600; color: var(--fg);">Estimated Delivery:</span>
+                                        <span style="color: var(--muted);">{{ reply.estimated_delivery }}</span>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div style="text-align: center; padding: 3rem 1.5rem; color: var(--muted);">
+                        <p style="margin: 0 0 1rem; font-size: 1.1rem;">No quote proposals generated yet.</p>
+                        <p style="margin: 0; font-size: 0.9rem; max-width: 400px; margin: 0 auto;">Our team reviews verified inquiries in order of submission. We will email you once we post a pricing proposal.</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- B2B Online Payment Checkout Block -->
+            {% if quote_request.status == 'quoted' and quote_request.replies.exists %}
+                <div class="overview-card" style="margin-bottom: 2rem; border-color: var(--accent); background: linear-gradient(180deg, #ffffff, #f7faff); box-shadow: 0 12px 35px rgba(29, 78, 216, 0.05); border-left: 4px solid var(--accent);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1.5rem;">
+                        <div>
+                            <span class="eyebrow" style="color: var(--accent); font-weight: bold; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.05em; display: block; margin-bottom: 0.25rem;">Step 3 Action Needed</span>
+                            <h2 style="margin: 0.25rem 0; font-size: 1.35rem; color: var(--fg);">Invoice & Online Checkout</h2>
+                            <p style="margin: 0; color: var(--muted); font-size: 0.9rem; line-height: 1.5; max-width: 500px;">
+                                                A pricing proposal of <strong>₹{{ quote_request.replies.first.price_per_unit|floatformat:2 }}/unit</strong> has been submitted. Pay online now to activate bottle bottling and shipping.
+                            </p>
+                        </div>
+                        <div>
+                            <button class="button" onclick="openPaymentModal()" style="font-weight: 700; box-shadow: 0 8px 25px rgba(29, 78, 216, 0.2); border-radius: 99px;">
+                                Pay Online: ₹{{ quote_request.replies.first.total_price|floatformat:2 }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- B2B Payment Receipt Block -->
+            {% if quote_request.status == 'completed' and quote_request.payments.exists %}
+                {% with payment=quote_request.payments.first %}
+                <div class="overview-card" style="margin-bottom: 2rem; border-color: #10b981; background: linear-gradient(180deg, #ffffff, #f6fdf9); box-shadow: 0 12px 35px rgba(16, 185, 129, 0.05); border-left: 4px solid #10b981;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px dashed #e2e8f0; padding-bottom: 1rem; margin-bottom: 1rem;">
+                        <div>
+                            <span class="eyebrow" style="color: #10b981; font-weight: bold; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.05em; display: block; margin-bottom: 0.25rem;">Order Receipt</span>
+                            <h2 style="margin: 0.25rem 0; font-size: 1.35rem; color: var(--fg);">Payment Confirmed Successfully</h2>
+                            <span style="font-size: 0.8rem; color: var(--muted);">Reference ID: <strong>{{ payment.transaction_id }}</strong></span>
+                        </div>
+                        <span style="background: #ecfdf5; color: #166534; padding: 0.35rem 0.75rem; border-radius: 99px; font-size: 0.85rem; font-weight: bold;">✓ Paid Success</span>
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem; color: var(--muted);">
+                        <tbody>
+                            <tr style="border-bottom: 1px solid #f8fafc;"><th style="text-align: left; padding: 0.5rem 0; font-weight: 500;">Payment Amount</th><td style="text-align: right; padding: 0.5rem 0; font-weight: 700; color: var(--fg);">₹{{ payment.amount|floatformat:2 }}</td></tr>
+                            <tr style="border-bottom: 1px solid #f8fafc;"><th style="text-align: left; padding: 0.5rem 0; font-weight: 500;">Checkout Date</th><td style="text-align: right; padding: 0.5rem 0; color: var(--fg);">{{ payment.created_at|date:"M d, Y H:i" }}</td></tr>
+                            <tr style="border-bottom: 1px solid #f8fafc;"><th style="text-align: left; padding: 0.5rem 0; font-weight: 500;">Method</th><td style="text-align: right; padding: 0.5rem 0; color: var(--fg); font-weight: 600;">
+                                {% if payment.payment_method == 'online_card' %}Credit/Debit Card
+                                {% elif payment.payment_method == 'phonepay' %}PhonePe UPI
+                                {% elif payment.payment_method == 'gpay' %}Google Pay (GPay)
+                                {% elif payment.payment_method == 'paytm' %}Paytm UPI
+                                {% elif payment.payment_method == 'netbanking' %}Net Banking
+                                {% else %}UPI Instant Pay{% endif %}
+                            </td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                {% endwith %}
+            {% endif %}
+
+            <!-- System Notifications log -->
+            <div class="overview-card" style="border-color: #e5e7eb;">
+                <h2 style="margin-top: 0; border-bottom: 2px solid #f1f5f9; padding-bottom: 0.75rem; font-size: 1.35rem; color: var(--fg);">
+                    Tracking Activity Log
+                </h2>
+                {% if notifications %}
+                    <ul style="list-style: none; padding: 0; margin: 1rem 0 0; display: flex; flex-direction: column; gap: 1rem;">
+                        {% for log in notifications %}
+                            <li style="display: flex; gap: 1rem; align-items: flex-start; padding-bottom: 0.75rem; border-bottom: 1px solid #f8fafc;">
+                                <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin-top: 0.5rem; flex-shrink: 0;"></div>
+                                <div>
+                                    <strong style="font-size: 0.95rem; color: var(--fg); display: block;">{{ log.title }}</strong>
+                                    <p style="margin: 0.2rem 0 0.3rem; font-size: 0.88rem; color: var(--muted); line-height: 1.4;">{{ log.message }}</p>
+                                    <span style="font-size: 0.75rem; color: var(--muted);">{{ log.created_at|date:"M d, Y H:i" }}</span>
+                                </div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p style="color: var(--muted); font-size: 0.9rem; margin-top: 1rem;">No notifications logged.</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Right Column: Original Details -->
+        <div>
+            <div class="overview-card" style="border-color: #e5e7eb; position: sticky; top: 2rem;">
+                <h2 style="margin-top: 0; border-bottom: 2px solid #f1f5f9; padding-bottom: 0.75rem; font-size: 1.35rem; color: var(--fg);">
+                    Quote Inquiry
+                </h2>
+                
+                <table style="width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.95rem;">
+                    <tbody>
+                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                            <th style="text-align: left; padding: 0.75rem 0; color: var(--muted); font-weight: 500;">Status</th>
+                            <td style="text-align: right; padding: 0.75rem 0; font-weight: 700; text-transform: capitalize; color: var(--accent);">
+                                {{ quote_request.get_status_display }}
+                            </td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                            <th style="text-align: left; padding: 0.75rem 0; color: var(--muted); font-weight: 500;">Email Verified</th>
+                            <td style="text-align: right; padding: 0.75rem 0; font-weight: 600; color: {% if quote_request.email_verified %}#10b981{% else %}#ef4444{% endif %};">
+                                {% if quote_request.email_verified %}Yes{% else %}No{% endif %}
+                            </td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                            <th style="text-align: left; padding: 0.75rem 0; color: var(--muted); font-weight: 500;">Created At</th>
+                            <td style="text-align: right; padding: 0.75rem 0; color: var(--fg);">{{ quote_request.created_at|date:"M d, Y" }}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                            <th style="text-align: left; padding: 0.75rem 0; color: var(--muted); font-weight: 500;">Customer</th>
+                            <td style="text-align: right; padding: 0.75rem 0; color: var(--fg);">{{ quote_request.name }}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                            <th style="text-align: left; padding: 0.75rem 0; color: var(--muted); font-weight: 500;">Company</th>
+                            <td style="text-align: right; padding: 0.75rem 0; color: var(--fg);">{{ quote_request.company|default:"—" }}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                            <th style="text-align: left; padding: 0.75rem 0; color: var(--muted); font-weight: 500;">Email</th>
+                            <td style="text-align: right; padding: 0.75rem 0; color: var(--fg); font-size: 0.88rem;">{{ quote_request.email }}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                            <th style="text-align: left; padding: 0.75rem 0; color: var(--muted); font-weight: 500;">Product Link</th>
+                            <td style="text-align: right; padding: 0.75rem 0; color: var(--fg);">
+                                {% if quote_request.product %}
+                                    <a style="color: var(--accent); text-decoration: underline;" href="{% url 'product_detail' quote_request.product.id %}">
+                                        {{ quote_request.product.name }}
+                                    </a>
+                                {% else %}
+                                    Custom Order
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                            <th style="text-align: left; padding: 0.75rem 0; color: var(--muted); font-weight: 500;">Size Capacity</th>
+                            <td style="text-align: right; padding: 0.75rem 0; color: var(--fg);">{{ quote_request.size }}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                            <th style="text-align: left; padding: 0.75rem 0; color: var(--muted); font-weight: 500;">Inquiry Quantity</th>
+                            <td style="text-align: right; padding: 0.75rem 0; font-weight: 700; color: var(--fg);">{{ quote_request.quantity }} unit(s)</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                {% if quote_request.details %}
+                    <div style="margin-top: 1.5rem; background: #f8fafc; padding: 1rem; border-radius: 0.75rem;">
+                        <h4 style="margin: 0 0 0.5rem; font-size: 0.9rem; color: var(--fg);">Order Details Provided:</h4>
+                        <p style="margin: 0; font-size: 0.85rem; color: var(--muted); line-height: 1.5;">{{ quote_request.details }}</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<!-- Payment Modal -->
+<div id="paymentModal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); align-items: center; justify-content: center;">
+    <div class="section" style="max-width: 540px; width: 95%; margin: auto; padding: 2rem; position: relative; box-shadow: 0 20px 80px rgba(0,0,0,0.25); animation: modalFadeIn 0.3s ease; background: #ffffff; border-radius: 1rem;">
+        <span onclick="closePaymentModal()" style="position: absolute; right: 1.5rem; top: 1.25rem; font-size: 1.5rem; cursor: pointer; color: var(--muted); font-weight: bold;">&times;</span>
+        <h2 style="margin-top: 0; font-size: 1.5rem; color: var(--fg); border-bottom: 2px solid #f1f5f9; padding-bottom: 0.5rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+            💳 Complete Online Payment
+        </h2>
+        
+        <form id="paymentForm" action="{% url 'process_quote_payment' token %}" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="payment_method" id="payment_method_input" value="online_card" />
+
+            <div style="margin-bottom: 1.25rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.75rem; font-size: 0.95rem; color: var(--fg);">Select Payment Option</label>
+                <div class="pay-methods-grid">
+                    <div class="pay-method-option active" data-method="online_card" onclick="changePaymentMethod('online_card')">
+                        <span class="icon">💳</span>
+                        <span class="label">Card</span>
+                    </div>
+                    <div class="pay-method-option" data-method="phonepay" onclick="changePaymentMethod('phonepay')">
+                        <span class="icon" style="color: #5f259f;">💜</span>
+                        <span class="label">PhonePe</span>
+                    </div>
+                    <div class="pay-method-option" data-method="gpay" onclick="changePaymentMethod('gpay')">
+                        <span class="icon" style="color: #4285f4;">🎨</span>
+                        <span class="label">GPay</span>
+                    </div>
+                    <div class="pay-method-option" data-method="paytm" onclick="changePaymentMethod('paytm')">
+                        <span class="icon" style="color: #00b9f1;">💙</span>
+                        <span class="label">Paytm</span>
+                    </div>
+                    <div class="pay-method-option" data-method="online_upi" onclick="changePaymentMethod('online_upi')">
+                        <span class="icon" style="color: #16a34a;">📱</span>
+                        <span class="label">Other UPI</span>
+                    </div>
+                    <div class="pay-method-option" data-method="netbanking" onclick="changePaymentMethod('netbanking')">
+                        <span class="icon" style="color: #0891b2;">🏦</span>
+                        <span class="label">Net Banking</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card inputs -->
+            <div id="cardFields" class="payment-section active">
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.35rem;">Cardholder Name</label>
+                    <input type="text" placeholder="John Doe" style="width: 100%; box-sizing: border-box;" id="cardName" required />
+                </div>
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.35rem;">Card Number</label>
+                    <input type="text" placeholder="1234 5678 9101 1121" maxlength="19" style="width: 100%; box-sizing: border-box;" id="cardNumber" required />
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div class="form-group">
+                        <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.35rem;">Expiry (MM/YY)</label>
+                        <input type="text" placeholder="12/28" maxlength="5" style="width: 100%; box-sizing: border-box;" id="cardExpiry" required />
+                    </div>
+                    <div class="form-group">
+                        <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.35rem;">CVV</label>
+                        <input type="password" placeholder="***" maxlength="3" style="width: 100%; box-sizing: border-box;" id="cardCvv" required />
+                    </div>
+                </div>
+            </div>
+
+            <!-- PhonePe inputs -->
+            <div id="phonepayFields" class="payment-section">
+                <div style="background: #f5f3ff; border: 1px solid #ddd6fe; border-radius: 0.5rem; padding: 0.75rem; margin-bottom: 1rem; font-size: 0.82rem; color: #5b21b6; line-height: 1.4;">
+                    💜 <strong>PhonePe Secure UPI</strong>: Pay securely using your PhonePe linked UPI account. Enter your UPI ID below to pay.
+                </div>
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.35rem;">PhonePe UPI ID</label>
+                    <div style="display: flex; gap: 0.25rem; align-items: center;">
+                        <input type="text" placeholder="e.g. 9876543210" style="width: 100%; box-sizing: border-box;" id="phonepayId" />
+                        <span style="font-weight: 700; font-size: 0.88rem; color: #5f259f; background: #f3e8ff; padding: 0.5rem 0.75rem; border-radius: 0.375rem; border: 1px solid #e9d5ff;">@ybl</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GPay inputs -->
+            <div id="gpayFields" class="payment-section">
+                <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 0.5rem; padding: 0.75rem; margin-bottom: 1rem; font-size: 0.82rem; color: #1e40af; line-height: 1.4;">
+                    🎨 <strong>Google Pay UPI</strong>: Enter your GPay VPA ID (e.g. <code>username@oksbi</code>) to initiate instant payment request on your phone.
+                </div>
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.35rem;">Google Pay UPI ID</label>
+                    <input type="text" placeholder="username@oksbi" style="width: 100%; box-sizing: border-box;" id="gpayId" />
+                </div>
+            </div>
+
+            <!-- Paytm inputs -->
+            <div id="paytmFields" class="payment-section">
+                <div style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 0.5rem; padding: 0.75rem; margin-bottom: 1rem; font-size: 0.82rem; color: #0369a1; line-height: 1.4;">
+                    💙 <strong>Paytm Secure Pay</strong>: Enter your registered Paytm UPI ID (e.g. <code>9876543210@paytm</code>) to authorize the payment.
+                </div>
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.35rem;">Paytm UPI ID</label>
+                    <div style="display: flex; gap: 0.25rem; align-items: center;">
+                        <input type="text" placeholder="e.g. 9876543210" style="width: 100%; box-sizing: border-box;" id="paytmId" />
+                        <span style="font-weight: 700; font-size: 0.88rem; color: #002970; background: #e0f2fe; padding: 0.5rem 0.75rem; border-radius: 0.375rem; border: 1px solid #bae6fd;">@paytm</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- UPI inputs -->
+            <div id="upiFields" class="payment-section">
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.35rem;">UPI ID (VPA)</label>
+                    <input type="text" placeholder="username@upi" style="width: 100%; box-sizing: border-box;" id="upiId" />
+                </div>
+            </div>
+
+            <!-- Net Banking inputs -->
+            <div id="netbankingFields" class="payment-section">
+                <div style="background: #ecfeff; border: 1px solid #a5f3fc; border-radius: 0.5rem; padding: 0.75rem; margin-bottom: 1rem; font-size: 0.82rem; color: #0891b2; line-height: 1.4;">
+                    🏦 <strong>Indian Net Banking</strong>: Select your bank below. You will be redirected to the secure bank simulation site.
+                </div>
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.35rem;">Select Bank</label>
+                    <select id="netbankSelect" style="width: 100%; padding: 0.55rem; border-radius: 0.5rem; border: 1px solid #cbd5e1; font-weight: 600; background: #ffffff;">
+                        <option value="sbi">State Bank of India (SBI)</option>
+                        <option value="hdfc">HDFC Bank</option>
+                        <option value="icici">ICICI Bank</option>
+                        <option value="axis">Axis Bank</option>
+                        <option value="kotak">Kotak Mahindra Bank</option>
+                        <option value="other">Other Indian Bank</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="background: rgba(29, 78, 216, 0.04); border: 1px solid rgba(29, 78, 216, 0.08); padding: 1rem; border-radius: 0.75rem; margin-top: 1.5rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 0.95rem; font-weight: 600; color: var(--muted);">Amount Payable:</span>
+                <span style="font-size: 1.25rem; font-weight: 700; color: var(--accent);">₹{{ quote_request.replies.first.total_price|floatformat:2 }}</span>
+            </div>
+
+            <button type="submit" id="paySubmitBtn" class="button" style="width: 100%; border-radius: 99px;">Pay ₹{{ quote_request.replies.first.total_price|floatformat:2 }} Securely</button>
+        </form>
+    </div>
+</div>
+
+<style>
+@keyframes modalFadeIn {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+.pay-methods-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+@media (max-width: 480px) {
+    .pay-methods-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+.pay-method-option {
+    border: 1.5px solid #e2e8f0;
+    padding: 0.6rem 0.25rem;
+    border-radius: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    cursor: pointer;
+    background: #f8fafc;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+.pay-method-option:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+}
+.pay-method-option.active[data-method="phonepay"] {
+    background: #f5f3ff;
+    border-color: #7c3aed;
+    box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.15);
+}
+.pay-method-option.active[data-method="gpay"] {
+    background: #eff6ff;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+.pay-method-option.active[data-method="paytm"] {
+    background: #f0f9ff;
+    border-color: #0284c7;
+    box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.15);
+}
+.pay-method-option.active[data-method="online_card"] {
+    background: #f8fafc;
+    border-color: #1e293b;
+    box-shadow: 0 0 0 2px rgba(30, 41, 59, 0.15);
+}
+.pay-method-option.active[data-method="online_upi"] {
+    background: #f0fdf4;
+    border-color: #16a34a;
+    box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.15);
+}
+.pay-method-option.active[data-method="netbanking"] {
+    background: #ecfeff;
+    border-color: #0891b2;
+    box-shadow: 0 0 0 2px rgba(8, 145, 178, 0.15);
+}
+.pay-method-option span.icon {
+    font-size: 1.25rem;
+}
+.pay-method-option span.label {
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+.payment-section {
+    display: none;
+    animation: fieldFadeIn 0.2s ease;
+}
+.payment-section.active {
+    display: block;
+}
+@keyframes fieldFadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>
+
+<script>
+function openPaymentModal() {
+    document.getElementById('paymentModal').style.display = 'flex';
+}
+function closePaymentModal() {
+    document.getElementById('paymentModal').style.display = 'none';
+}
+function changePaymentMethod(method) {
+    // Update input value
+    document.getElementById('payment_method_input').value = method;
+
+    // Toggle active class on option elements
+    document.querySelectorAll('.pay-method-option').forEach(el => {
+        if(el.getAttribute('data-method') === method) {
+            el.classList.add('active');
+        } else {
+            el.classList.remove('active');
+        }
+    });
+
+    // Toggle input field sections
+    document.querySelectorAll('.payment-section').forEach(el => {
+        el.classList.remove('active');
+    });
+
+    // Reset required attributes
+    document.getElementById('cardName').required = false;
+    document.getElementById('cardNumber').required = false;
+    document.getElementById('cardExpiry').required = false;
+    document.getElementById('cardCvv').required = false;
+    document.getElementById('phonepayId').required = false;
+    document.getElementById('gpayId').required = false;
+    document.getElementById('paytmId').required = false;
+    document.getElementById('upiId').required = false;
+
+    // Show selected section & set required fields
+    if (method === 'online_card') {
+        document.getElementById('cardFields').classList.add('active');
+        document.getElementById('cardName').required = true;
+        document.getElementById('cardNumber').required = true;
+        document.getElementById('cardExpiry').required = true;
+        document.getElementById('cardCvv').required = true;
+        document.getElementById('paySubmitBtn').innerText = 'Pay ₹{{ quote_request.replies.first.total_price|floatformat:2 }} via Card';
+    } else if (method === 'phonepay') {
+        document.getElementById('phonepayFields').classList.add('active');
+        document.getElementById('phonepayId').required = true;
+        document.getElementById('paySubmitBtn').innerText = 'Pay ₹{{ quote_request.replies.first.total_price|floatformat:2 }} via PhonePe';
+    } else if (method === 'gpay') {
+        document.getElementById('gpayFields').classList.add('active');
+        document.getElementById('gpayId').required = true;
+        document.getElementById('paySubmitBtn').innerText = 'Pay ₹{{ quote_request.replies.first.total_price|floatformat:2 }} via GPay';
+    } else if (method === 'paytm') {
+        document.getElementById('paytmFields').classList.add('active');
+        document.getElementById('paytmId').required = true;
+        document.getElementById('paySubmitBtn').innerText = 'Pay ₹{{ quote_request.replies.first.total_price|floatformat:2 }} via Paytm';
+    } else if (method === 'online_upi') {
+        document.getElementById('upiFields').classList.add('active');
+        document.getElementById('upiId').required = true;
+        document.getElementById('paySubmitBtn').innerText = 'Pay ₹{{ quote_request.replies.first.total_price|floatformat:2 }} via UPI';
+    } else if (method === 'netbanking') {
+        document.getElementById('netbankingFields').classList.add('active');
+        document.getElementById('paySubmitBtn').innerText = 'Pay ₹{{ quote_request.replies.first.total_price|floatformat:2 }} via Net Banking';
+    }
+}
+</script>
+{% endblock %}

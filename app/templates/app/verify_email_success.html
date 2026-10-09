@@ -1,0 +1,43 @@
+{% extends 'app/base.html' %}
+
+{% block title %}Email Verification - CheersThePure{% endblock %}
+
+{% block content %}
+<section class="section auth-section centered-form center-text">
+    {% if success %}
+        <div class="success-verification-card">
+            <div class="step-badge" style="background: var(--accent); margin: 0 auto 1.5rem; width: 3.5rem; height: 3.5rem; font-size: 1.5rem; display: flex; align-items: center; justify-content: center;">
+                ✓
+            </div>
+            <h1 style="color: var(--fg); font-size: 1.85rem; margin-bottom: 0.5rem;">Email Verified Successfully!</h1>
+            <p style="color: var(--muted); line-height: 1.6; margin-bottom: 2rem;">
+                Thank you for verifying your email address. Your quote request for 
+                <strong>{{ quote_request.product.name|default:quote_request.size }}</strong> is now active and has been forwarded to our sales team for review.
+            </p>
+            
+            <div style="background: rgba(29, 78, 216, 0.04); border: 1px solid rgba(29, 78, 216, 0.08); padding: 1.25rem; border-radius: 1rem; margin-bottom: 2rem; text-align: left;">
+                <h3 style="margin-top: 0; font-size: 1rem; color: var(--fg);">Quote Request Details:</h3>
+                <ul style="list-style: none; padding: 0; margin: 0; color: var(--muted); font-size: 0.95rem;">
+                    <li style="margin-bottom: 0.4rem;"><strong>Client Name:</strong> {{ quote_request.name }}</li>
+                    <li style="margin-bottom: 0.4rem;"><strong>Item:</strong> {{ quote_request.product.name|default:quote_request.size }}</li>
+                    <li style="margin-bottom: 0.4rem;"><strong>Quantity:</strong> {{ quote_request.quantity }} unit(s)</li>
+                    <li style="margin-bottom: 0.4rem;"><strong>Status:</strong> <span class="alert-info" style="padding: 0.2rem 0.5rem; border-radius: 0.5rem; font-size: 0.85rem; font-weight: bold; border-left: none;">{{ quote_request.get_status_display }}</span></li>
+                </ul>
+            </div>
+
+            <a class="button" href="{% url 'view_quote_status' token %}">Go to Quote Tracker Portal</a>
+        </div>
+    {% else %}
+        <div class="error-verification-card">
+            <div class="step-badge" style="background: #ef4444; margin: 0 auto 1.5rem; width: 3.5rem; height: 3.5rem; font-size: 1.5rem; display: flex; align-items: center; justify-content: center;">
+                ✗
+            </div>
+            <h1 style="color: #991b1b; font-size: 1.85rem; margin-bottom: 0.5rem;">Verification Failed</h1>
+            <p style="color: var(--muted); line-height: 1.6; margin-bottom: 2rem;">
+                {{ message|default:"We encountered an issue while verifying your email address. The link might be invalid or expired." }}
+            </p>
+            <a class="button" href="{% url 'order_request' %}">Request a New Quote</a>
+        </div>
+    {% endif %}
+</section>
+{% endblock %}

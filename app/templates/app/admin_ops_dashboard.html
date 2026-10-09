@@ -1,0 +1,731 @@
+{% extends 'app/base.html' %}
+{% load static %}
+
+{% block title %}Admin Control Panel — Cheers the Pure Water{% endblock %}
+{% block meta_description %}Restricted administrator operations dashboard for order management and B2B quote replies.{% endblock %}
+
+{% block extra_head %}
+<style>
+/* ═══════════════════════════════════════════════════════════
+   ADMIN OPS DASHBOARD — Premium Minimal Dark Command Center
+═══════════════════════════════════════════════════════════ */
+
+/* ── Metric Cards ── */
+.metric-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+  margin-bottom: 2.5rem;
+}
+
+.metric-card {
+  background: rgba(255,255,255,0.42);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255,255,255,0.3);
+  box-shadow: 0 8px 32px rgba(31,38,135,0.1);
+  border-radius: 1.5rem;
+  padding: 1.75rem 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  transition: transform 0.28s cubic-bezier(0.2,0.9,0.2,1), box-shadow 0.28s;
+}
+
+.metric-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 48px rgba(14,165,233,0.18);
+}
+
+.metric-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  flex-shrink: 0;
+}
+
+.metric-icon.blue   { background: linear-gradient(135deg, #0ea5e9, #4f46e5); }
+.metric-icon.green  { background: linear-gradient(135deg, #10b981, #059669); }
+.metric-icon.amber  { background: linear-gradient(135deg, #f59e0b, #d97706); }
+
+.metric-num {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1;
+  margin-bottom: 0.2rem;
+}
+
+.metric-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* ── Panel ── */
+.admin-panel {
+  background: rgba(255,255,255,0.42);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255,255,255,0.28);
+  box-shadow: 0 8px 32px rgba(31,38,135,0.09);
+  border-radius: 1.5rem;
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+
+.panel-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1.5px solid rgba(255,255,255,0.35);
+}
+
+/* ── Tables ── */
+.ops-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.ops-table thead th {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #64748b;
+  background: rgba(248,250,252,0.7);
+  border-bottom: 1.5px solid rgba(226,232,240,0.8);
+}
+
+.ops-table tbody tr {
+  border-bottom: 1px solid rgba(226,232,240,0.5);
+  transition: background 0.2s;
+}
+
+.ops-table tbody tr:last-child { border-bottom: none; }
+
+.ops-table tbody tr:hover { background: rgba(240,249,255,0.7); }
+
+.ops-table td {
+  padding: 0.9rem 1rem;
+  vertical-align: middle;
+  color: #0f172a;
+}
+
+/* ── Status Dropdown ── */
+.status-select {
+  padding: 0.45rem 0.75rem;
+  border-radius: 0.65rem;
+  border: 1.5px solid rgba(14,165,233,0.25);
+  background: rgba(255,255,255,0.85);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: #0f172a;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  min-width: 180px;
+}
+
+.status-select:focus {
+  outline: none;
+  border-color: #0ea5e9;
+  box-shadow: 0 0 0 3px rgba(14,165,233,0.12);
+}
+
+.status-select.updating {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+/* ── Status Pill ── */
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.pill-confirmed  { background: #eff6ff; color: #1e40af; }
+.pill-processing { background: #fef3c7; color: #92400e; }
+.pill-shipped    { background: #f0fdf4; color: #166534; }
+.pill-delivered  { background: #ecfdf5; color: #065f46; }
+.pill-cancelled  { background: #fee2e2; color: #991b1b; }
+
+/* ── B2B Quote reply row ── */
+.quote-reply-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: nowrap;
+}
+
+.price-input {
+  width: 110px;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.65rem;
+  border: 1.5px solid rgba(14,165,233,0.25);
+  background: rgba(255,255,255,0.85);
+  font-size: 0.88rem;
+  font-weight: 700;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.price-input:focus {
+  outline: none;
+  border-color: #0ea5e9;
+  box-shadow: 0 0 0 3px rgba(14,165,233,0.12);
+}
+.price-input::placeholder { color: #94a3b8; }
+
+.send-btn {
+  padding: 0.5rem 1.1rem;
+  border: none;
+  border-radius: 0.65rem;
+  background: linear-gradient(135deg, #10b981, #0ea5e9);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: transform 0.18s, box-shadow 0.18s, opacity 0.18s;
+  box-shadow: 0 3px 12px rgba(16,185,129,0.32);
+  white-space: nowrap;
+}
+.send-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(16,185,129,0.45); }
+.send-btn:active { transform: translateY(0); }
+.send-btn.sending { opacity: 0.6; cursor: wait; }
+
+/* ── Toast notification ── */
+#ops-toast {
+  position: fixed;
+  bottom: 1.75rem;
+  right: 1.75rem;
+  z-index: 9999;
+  padding: 0.85rem 1.5rem;
+  border-radius: 1rem;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #fff;
+  display: none;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.18);
+  backdrop-filter: blur(10px);
+  animation: toastSlide 0.3s ease;
+}
+.toast-success { background: linear-gradient(135deg, #10b981, #059669); }
+.toast-error   { background: linear-gradient(135deg, #ef4444, #dc2626); }
+
+@keyframes toastSlide {
+  from { transform: translateY(20px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* ── Empty state ── */
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #94a3b8;
+}
+.empty-state .empty-icon { font-size: 3rem; margin-bottom: 0.75rem; }
+.empty-state p { margin: 0; font-size: 0.95rem; }
+
+/* ── Page header ── */
+.ops-header {
+  background: linear-gradient(135deg, #0c1a40 0%, #0369a1 60%, #0ea5e9 100%);
+  border-radius: 1.5rem;
+  padding: 2rem 2.5rem;
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.ops-header h1 { font-size: 1.6rem; font-weight: 800; color: #fff; margin: 0 0 0.3rem; }
+.ops-header p  { color: rgba(255,255,255,0.65); margin: 0; font-size: 0.9rem; }
+.ops-admin-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 999px;
+  padding: 0.4rem 1rem;
+  color: rgba(255,255,255,0.8);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .metric-strip { grid-template-columns: 1fr; }
+  .ops-table { font-size: 0.8rem; }
+  .quote-reply-row { flex-wrap: wrap; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ═══════════════════════════════════════════════════════════
+     PAGE HEADER
+═══════════════════════════════════════════════════════════ -->
+<div class="ops-header">
+  <div>
+    <h1>🛡️ Admin Control Panel</h1>
+    <p>Manage B2C orders, track deliveries, and respond to B2B corporate quotes instantly.</p>
+  </div>
+  <div class="ops-admin-badge">
+    <span>👤</span>
+    <span>{{ request.user.email }}</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     METRICS STRIP
+═══════════════════════════════════════════════════════════ -->
+<div class="metric-strip">
+  <div class="metric-card">
+    <div class="metric-icon blue">📦</div>
+    <div>
+      <div class="metric-num" id="total-orders-count">{{ total_b2c_orders }}</div>
+      <div class="metric-label">Total B2C Orders</div>
+    </div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-icon green">🚚</div>
+    <div>
+      <div class="metric-num" id="active-deliveries-count">{{ active_deliveries }}</div>
+      <div class="metric-label">Active Deliveries</div>
+    </div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-icon amber">📋</div>
+    <div>
+      <div class="metric-num" id="pending-quotes-count">{{ pending_quotes_count }}</div>
+      <div class="metric-label">Pending B2B Quotes</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     B2C ORDERS — Status Control
+═══════════════════════════════════════════════════════════ -->
+<div class="admin-panel">
+  <div class="panel-title">📦 B2C Order Management</div>
+
+  {% if b2c_orders %}
+    <div style="overflow-x: auto;">
+      <table class="ops-table" id="orders-table">
+        <thead>
+          <tr>
+            <th>Order #</th>
+            <th>Customer</th>
+            <th>Amount</th>
+            <th>Date</th>
+            <th>Current Status</th>
+            <th style="text-align:center;">Update Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for order in b2c_orders %}
+          <tr id="order-row-{{ order.id }}" data-order-id="{{ order.id }}">
+            <td><strong style="color:#0ea5e9;">#{{ order.order_number }}</strong></td>
+            <td>
+              <div style="font-weight: 600;">{{ order.shipping_name }}</div>
+              <div style="font-size: 0.78rem; color: #64748b;">{{ order.shipping_email }}</div>
+            </td>
+            <td><strong>₹{{ order.total_amount }}</strong></td>
+            <td style="color: #64748b;">{{ order.created_at|date:"M d, Y" }}</td>
+            <td>
+              <span class="status-pill pill-{{ order.status }}" id="pill-{{ order.id }}">
+                {% if order.status == 'confirmed'  %}✅ Order Confirmed
+                {% elif order.status == 'processing' %}⚙️ Processing
+                {% elif order.status == 'shipped'    %}🚚 Out for Delivery
+                {% elif order.status == 'delivered'  %}🎉 Arrived at Destination
+                {% elif order.status == 'cancelled'  %}❌ Cancelled
+                {% else %}{{ order.get_status_display }}
+                {% endif %}
+              </span>
+            </td>
+            <td style="text-align: center;">
+              <select class="status-select"
+                      id="status-sel-{{ order.id }}"
+                      data-order-id="{{ order.id }}"
+                      aria-label="Update status for order {{ order.order_number }}">
+                {% for val, label in status_choices %}
+                  <option value="{{ val }}" {% if order.status == val %}selected{% endif %}>
+                    {{ label }}
+                  </option>
+                {% endfor %}
+              </select>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">📭</div>
+      <p>No B2C orders placed yet. Orders will appear here after checkout.</p>
+    </div>
+  {% endif %}
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     B2B PENDING QUOTES — Quick Reply
+═══════════════════════════════════════════════════════════ -->
+<div class="admin-panel">
+  <div class="panel-title">📋 Pending B2B Quote Requests</div>
+
+  {% if pending_quotes %}
+    <div style="overflow-x: auto;">
+      <table class="ops-table" id="quotes-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Company / Contact</th>
+            <th>Product / Size</th>
+            <th>Quantity</th>
+            <th>Submitted</th>
+            <th style="min-width: 280px;">Send Wholesale Price</th>
+          </tr>
+        </thead>
+        <tbody id="quotes-tbody">
+          {% for quote in pending_quotes %}
+          <tr id="quote-row-{{ quote.id }}" data-quote-id="{{ quote.id }}">
+            <td><strong style="color:#64748b;">#{{ quote.id }}</strong></td>
+            <td>
+              <div style="font-weight: 700;">{{ quote.name }}</div>
+              <div style="font-size: 0.78rem; color: #64748b;">{{ quote.email }}</div>
+            </td>
+            <td>
+              <strong>{% if quote.product %}{{ quote.product.name }}{% else %}Custom Order{% endif %}</strong>
+              <div style="font-size: 0.78rem; color: #64748b;">{{ quote.size }}</div>
+            </td>
+            <td><strong>{{ quote.quantity }} units</strong></td>
+            <td style="color: #64748b;">{{ quote.created_at|date:"M d, Y" }}</td>
+            <td>
+              <div class="quote-reply-row">
+                <span style="font-weight:700; color: #475569; font-size:0.85rem;">₹</span>
+                <input
+                  type="number"
+                  class="price-input"
+                  id="price-input-{{ quote.id }}"
+                  placeholder="per unit"
+                  min="1"
+                  step="0.01"
+                  aria-label="Wholesale price per unit for quote {{ quote.id }}"
+                />
+                <button
+                  class="send-btn"
+                  id="send-btn-{{ quote.id }}"
+                  data-quote-id="{{ quote.id }}"
+                  aria-label="Send price quote for request {{ quote.id }}">
+                  📨 Send Quote
+                </button>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">✅</div>
+      <p>No pending B2B quote requests. All inquiries have been handled!</p>
+    </div>
+  {% endif %}
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     USER ACCOUNTS — Manage Roles
+═══════════════════════════════════════════════════════════ -->
+<div class="admin-panel">
+  <div class="panel-title">👥 User Account Management</div>
+
+  <!-- Search Input -->
+  <div style="margin-bottom: 1.25rem; background: rgba(248, 250, 252, 0.7); padding: 0.75rem; border-radius: 0.75rem; border: 1px solid rgba(226, 232, 240, 0.8); display: flex; align-items: center; gap: 0.5rem;">
+    <span style="font-size: 1.1rem;">🔍</span>
+    <input type="text" id="userSearchInput" onkeyup="filterUsersTable()" placeholder="Search users by Username, Email, Company, or Current Role..." style="width: 100%; padding: 0.5rem 0.75rem; border: 1.5px solid rgba(14,165,233,0.25); border-radius: 0.65rem; font-size: 0.88rem; box-sizing: border-box; background: rgba(255,255,255,0.85); font-weight: 600; color: #0f172a;" />
+  </div>
+
+  {% if users %}
+    <div style="overflow-x: auto;">
+      <table class="ops-table" id="usersTable">
+        <thead>
+          <tr>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Company Name</th>
+            <th>Phone</th>
+            <th>Current Role</th>
+            <th style="text-align: right;">Manage Role (Real-time)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+          <tr id="user-row-{{ u.id }}">
+            <td><strong>{{ u.username }}</strong></td>
+            <td style="color: #64748b;">{{ u.email }}</td>
+            <td>{{ u.profile.company_name|default:"—" }}</td>
+            <td style="color: #64748b;">{{ u.profile.phone|default:"—" }}</td>
+            <td>
+              <span class="status-pill {% if u.profile.role == 'staff' or u.is_superuser %}pill-confirmed{% elif u.profile.role == 'distributor' %}pill-processing{% elif u.profile.role == 'partner' %}pill-shipped{% else %}pill-confirmed{% endif %}">
+                {% if u.is_superuser %}🛡️ Superuser{% else %}{{ u.profile.get_role_display|default:"Customer" }}{% endif %}
+              </span>
+            </td>
+            <td style="text-align: right;">
+              {% if u.is_superuser %}
+                <span style="font-size: 0.85rem; font-weight: 700; color: #64748b; padding-right: 1rem;">System Superuser</span>
+              {% else %}
+                <form action="{% url 'admin_update_user_role' u.id %}" method="post" style="display: inline-flex; gap: 0.5rem; align-items: center; margin: 0;">
+                  {% csrf_token %}
+                  <select name="role" class="status-select" style="min-width: 140px; padding: 0.35rem 0.6rem; font-size: 0.82rem;" aria-label="Role for {{ u.username }}">
+                    {% for r_val, r_label in role_choices %}
+                      <option value="{{ r_val }}" {% if u.profile.role == r_val or not u.profile.role and r_val == 'customer' %}selected{% endif %}>{{ r_label }}</option>
+                    {% endfor %}
+                  </select>
+                  <button type="submit" class="send-btn" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">💾 Save</button>
+                </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">👥</div>
+      <p>No registered users found.</p>
+    </div>
+  {% endif %}
+</div>
+
+<!-- Quick navigation -->
+<div style="display:flex; gap:1rem; flex-wrap:wrap; margin-top:1rem;">
+  <a href="{% url 'dashboard' %}" class="button button-secondary" id="btn-full-dashboard">
+    📊 Full Dashboard
+  </a>
+  <a href="{% url 'products' %}" class="button button-secondary" id="btn-view-products">
+    📦 View Products
+  </a>
+</div>
+
+<!-- Toast notification -->
+<div id="ops-toast" role="alert" aria-live="polite"></div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function () {
+  'use strict';
+
+  const CSRF = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+
+  /* ── Toast helper ─────────────────────────────────────────── */
+  let toastTimer;
+  function showToast(msg, type) {
+    const toast = document.getElementById('ops-toast');
+    if (!toast) return;
+    toast.className = 'toast-' + (type || 'success');
+    toast.textContent = msg;
+    toast.style.display = 'flex';
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toast.style.display = 'none'; }, 3200);
+  }
+
+  /* ── Status pill helper ───────────────────────────────────── */
+  const PILL_LABELS = {
+    confirmed:  '✅ Order Confirmed',
+    processing: '⚙️ Processing',
+    shipped:    '🚚 Out for Delivery',
+    delivered:  '🎉 Arrived at Destination',
+    cancelled:  '❌ Cancelled',
+  };
+
+  const PILL_CLASSES = {
+    confirmed: 'pill-confirmed',
+    processing:'pill-processing',
+    shipped:   'pill-shipped',
+    delivered: 'pill-delivered',
+    cancelled: 'pill-cancelled',
+  };
+
+  /* ═══════════════════════════════════════════════════════════
+     B2C ORDER STATUS — change on dropdown select
+  ═══════════════════════════════════════════════════════════ */
+  document.querySelectorAll('.status-select').forEach(function (sel) {
+    sel.addEventListener('change', function () {
+      const orderId   = sel.dataset.orderId;
+      const newStatus = sel.value;
+      if (!orderId || !newStatus) return;
+
+      sel.classList.add('updating');
+      sel.disabled = true;
+
+      const body = new URLSearchParams({ status: newStatus });
+
+      fetch('/api/orders/' + orderId + '/update-status/', {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': CSRF,
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: body.toString(),
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (data.ok) {
+            // Update the status pill in the same row
+            const pill = document.getElementById('pill-' + orderId);
+            if (pill) {
+              pill.className = 'status-pill ' + (PILL_CLASSES[newStatus] || '');
+              pill.textContent = PILL_LABELS[newStatus] || newStatus;
+            }
+            showToast('✅ Order #' + orderId + ' updated to: ' + (PILL_LABELS[newStatus] || newStatus), 'success');
+          } else {
+            showToast('❌ Update failed: ' + (data.error || 'Unknown error'), 'error');
+            // Reset select to previous value
+          }
+        })
+        .catch(function (err) {
+          showToast('❌ Network error. Please retry.', 'error');
+          console.error(err);
+        })
+        .finally(function () {
+          sel.classList.remove('updating');
+          sel.disabled = false;
+        });
+    });
+  });
+
+  /* ═══════════════════════════════════════════════════════════
+     B2B QUOTES — Send wholesale price
+  ═══════════════════════════════════════════════════════════ */
+  document.querySelectorAll('.send-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      const quoteId    = btn.dataset.quoteId;
+      const priceInput = document.getElementById('price-input-' + quoteId);
+      const price      = priceInput ? priceInput.value.trim() : '';
+
+      if (!price || isNaN(parseFloat(price)) || parseFloat(price) <= 0) {
+        priceInput && (priceInput.style.borderColor = '#ef4444');
+        showToast('⚠️ Enter a valid wholesale price first.', 'error');
+        priceInput && priceInput.focus();
+        return;
+      }
+
+      btn.classList.add('sending');
+      btn.disabled     = true;
+      btn.textContent  = '⏳ Sending…';
+
+      const body = new URLSearchParams({ price: price });
+
+      fetch('/api/quotes/' + quoteId + '/reply/', {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': CSRF,
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: body.toString(),
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (data.ok) {
+            // Animate row out — visually clear it
+            const row = document.getElementById('quote-row-' + quoteId);
+            if (row) {
+              row.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+              row.style.opacity    = '0';
+              row.style.transform  = 'translateX(30px)';
+              setTimeout(function () {
+                row.remove();
+                // Update pending count
+                const countEl = document.getElementById('pending-quotes-count');
+                if (countEl) {
+                  const cur = parseInt(countEl.textContent, 10);
+                  if (!isNaN(cur) && cur > 0) countEl.textContent = cur - 1;
+                }
+                // Show empty state if no more rows
+                const tbody = document.getElementById('quotes-tbody');
+                if (tbody && tbody.children.length === 0) {
+                  const table = document.getElementById('quotes-table');
+                  if (table) {
+                    table.parentElement.innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><p>All quotes have been replied to!</p></div>';
+                  }
+                }
+              }, 420);
+            }
+            showToast('✅ Quote #' + quoteId + ' — price ₹' + price + '/unit sent!', 'success');
+          } else {
+            showToast('❌ Reply failed: ' + (data.error || 'Unknown error'), 'error');
+            btn.classList.remove('sending');
+            btn.disabled    = false;
+            btn.textContent = '📨 Send Quote';
+          }
+        })
+        .catch(function (err) {
+          showToast('❌ Network error. Please retry.', 'error');
+          console.error(err);
+          btn.classList.remove('sending');
+          btn.disabled    = false;
+          btn.textContent = '📨 Send Quote';
+        });
+    });
+  });
+
+  /* ── Price input validation feedback ─────────────────────── */
+  document.querySelectorAll('.price-input').forEach(function (inp) {
+    inp.addEventListener('input', function () {
+      inp.style.borderColor = inp.value.trim() ? '' : '';
+    });
+  });
+
+  /* ── User table search filtering ─────────────────────────── */
+  window.filterUsersTable = function () {
+    const searchVal = document.getElementById('userSearchInput').value.toLowerCase();
+    const rows = document.querySelectorAll('#usersTable tbody tr');
+    
+    rows.forEach(function (row) {
+      const username = row.cells[0] ? row.cells[0].innerText.toLowerCase() : '';
+      const email    = row.cells[1] ? row.cells[1].innerText.toLowerCase() : '';
+      const company  = row.cells[2] ? row.cells[2].innerText.toLowerCase() : '';
+      const role     = row.cells[4] ? row.cells[4].innerText.toLowerCase() : '';
+      
+      if (username.includes(searchVal) || email.includes(searchVal) || company.includes(searchVal) || role.includes(searchVal)) {
+        row.style.display = '';
+      } else {
+        row.style.display = 'none';
+      }
+    });
+  };
+
+})();
+</script>
+
+{# ── DispatchAI Chat Widget — admin view of DispatchAI ───────────────────── #}
+{% include "app/dispatch_widget.html" %}
+
+{% endblock %}

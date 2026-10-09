@@ -1,0 +1,45 @@
+{% extends 'app/base.html' %}
+
+{% block title %}Contact - CheersThePure{% endblock %}
+
+{% block content %}
+<section class="section contact-section">
+    <div class="section-header">
+        <h1>Contact Sales</h1>
+        <p>Send us a message and our team will respond with product details and pricing information.</p>
+    </div>
+    {% if success %}
+        <div class="alert alert-success">
+            Thank you! Your message has been sent. We will contact you shortly.
+        </div>
+    {% endif %}
+    <div class="contact-layout">
+        <form method="post" class="contact-form" data-api-contact>
+            {% csrf_token %}
+            <div class="contact-feedback"></div>
+            <label>
+                Name
+                <input type="text" name="name" required />
+            </label>
+            <label>
+                Email
+                <input type="email" name="email" required />
+            </label>
+            <label>
+                Subject
+                <input type="text" name="subject" required />
+            </label>
+            <label>
+                Message
+                <textarea name="message" rows="6" required></textarea>
+            </label>
+            <button class="button" type="submit">Send Message</button>
+        </form>
+        <aside class="contact-info-card">
+            <h2>Use your images or videos to stand out</h2>
+            <p>Drop your media files into <code>app/static/app/media/</code> and use them in the hero or gallery sections.</p>
+            <p>We support both the standard HTML video tag and static image references in the site sections.</p>
+        </aside>
+    </div>
+</section>
+{% endblock %}

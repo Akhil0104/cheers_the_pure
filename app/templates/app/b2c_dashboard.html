@@ -1,0 +1,57 @@
+{% extends 'app/base.html' %}
+
+{% block title %}My Account - CheersThePure{% endblock %}
+
+{% block content %}
+<section class="section">
+    <div class="section-header">
+        <h1>My Retail Account</h1>
+        <p>Shop, track orders, and download invoices from here.</p>
+    </div>
+
+    <div style="display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap;">
+        <a class="button" href="{% url 'products' %}">Shop Products</a>
+        <a class="button button-secondary" href="{% url 'view_cart' %}">View Cart</a>
+        <a class="button button-secondary" href="{% url 'order_history' %}">All Orders</a>
+    </div>
+
+    <h2 style="margin-bottom: 1rem;">Recent Orders ({{ orders_count }})</h2>
+
+    {% if orders %}
+        <div class="table-responsive">
+            <table class="table" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <th style="text-align: left; padding: 0.75rem;">Order #</th>
+                        <th style="text-align: left; padding: 0.75rem;">Total</th>
+                        <th style="text-align: left; padding: 0.75rem;">Status</th>
+                        <th style="text-align: left; padding: 0.75rem;">Date</th>
+                        <th style="text-align: left; padding: 0.75rem;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr style="border-top: 1px solid #e5e7eb;">
+                        <td style="padding: 0.75rem;">{{ order.order_number }}</td>
+                        <td style="padding: 0.75rem;">₹{{ order.total_amount }}</td>
+                        <td style="padding: 0.75rem;">{{ order.get_status_display }}</td>
+                        <td style="padding: 0.75rem;">{{ order.created_at|date:"M d, Y" }}</td>
+                        <td style="padding: 0.75rem;">
+                            <a href="{% url 'order_details' order.id %}">Details</a>
+                            &nbsp;|&nbsp;
+                            <a href="{% url 'order_track' order.id %}">Track</a>
+                            {% if order.invoice_token %}
+                                &nbsp;|&nbsp;
+                                <a href="{% url 'view_invoice' order.id order.invoice_token %}">Invoice</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p>No orders yet. <a href="{% url 'products' %}">Start shopping</a>.</p>
+    {% endif %}
+</section>
+{% endblock %}

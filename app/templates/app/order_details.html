@@ -1,0 +1,132 @@
+{% extends 'app/base.html' %}
+
+{% block title %}Order {{ order.order_number }} - Cheers the Pure Water{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <h1>Order Details</h1>
+  
+  <div class="row">
+    <div class="col-md-8">
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5>Order #{{ order.order_number }}</h5>
+          <small class="text-muted">Placed on {{ order.created_at|date:"M d, Y H:i" }}</small>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <h6>Shipping To:</h6>
+              <p>
+                {{ order.shipping_name }}<br />
+                {{ order.shipping_address }}<br />
+                {{ order.shipping_city }}, {{ order.shipping_state }} {{ order.shipping_postal_code }}<br />
+                {{ order.shipping_email }}<br />
+                {{ order.shipping_phone }}
+              </p>
+            </div>
+            <div class="col-md-6">
+              <h6>Order Status:</h6>
+              <p>
+                <span class="badge bg-{% if order.status == 'delivered' %}success{% elif order.status == 'shipped' %}info{% elif order.status == 'processing' %}warning{% elif order.status == 'cancelled' %}danger{% else %}secondary{% endif %}">
+                  {{ order.get_status_display }}
+                </span>
+              </p>
+              {% if order.shipped_at %}
+                <p><strong>Shipped:</strong> {{ order.shipped_at|date:"M d, Y H:i" }}</p>
+              {% endif %}
+              {% if order.delivered_at %}
+                <p><strong>Delivered:</strong> {{ order.delivered_at|date:"M d, Y H:i" }}</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5>Order Items</h5>
+        </div>
+        <div class="card-body">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Price</th>
+                <th>Quantity</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in order_items %}
+              <tr>
+                <td>
+                  {{ item.product_name }}
+                  {% if item.product %}
+                    <div class="text-muted small">{{ item.product.capacity }}</div>
+                  {% endif %}
+                </td>
+                <td>₹{{ item.product_price }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>₹{{ item.get_total_price }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {% if payment %}
+      <div class="card">
+        <div class="card-header">
+          <h5>Payment</h5>
+        </div>
+        <div class="card-body">
+          <p><strong>Amount:</strong> ₹{{ payment.amount }}</p>
+          <p>
+            <strong>Status:</strong> 
+            <span class="badge bg-{% if payment.status == 'success' %}success{% elif payment.status == 'failed' %}danger{% else %}warning{% endif %}">
+              {{ payment.get_status_display }}
+            </span>
+          </p>
+          <p><strong>Transaction ID:</strong> {{ payment.transaction_id }}</p>
+          <p><strong>Payment Method:</strong> {{ payment.get_payment_method_display }}</p>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-header">
+          <h5>Order Total</h5>
+        </div>
+        <div class="card-body">
+          <div class="d-flex justify-content-between mb-2">
+            <span>Subtotal:</span>
+            <span>₹{{ order.total_amount }}</span>
+          </div>
+          <div class="d-flex justify-content-between mb-2">
+            <span>Shipping:</span>
+            <span>FREE</span>
+          </div>
+          <hr />
+          <div class="d-flex justify-content-between">
+            <h6>Total:</h6>
+            <h6>₹{{ order.total_amount }}</h6>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-4">
+        <a href="{% url 'order_track' order.id %}" class="btn btn-primary btn-block">Track Order Live</a>
+        {% if invoice_url %}
+          <a href="{{ invoice_url }}" class="btn btn-secondary btn-block mt-2">View Invoice</a>
+        {% endif %}
+        <a href="{% url 'order_history' %}" class="btn btn-secondary btn-block mt-2">Back to Orders</a>
+        <a href="{% url 'products' %}" class="btn btn-primary btn-block mt-2">Continue Shopping</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

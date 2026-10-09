@@ -1,0 +1,85 @@
+{% extends 'app/base.html' %}
+
+{% block title %}My Orders - Cheers the Pure Water{% endblock %}
+
+{% block content %}
+<section class="section animate-fade-up">
+    <div class="section-header text-center mb-5 animate-fade-up">
+        <h1 class="display-4 fw-bold">My Orders</h1>
+        <p class="text-muted">Track and manage your past purchases</p>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-10 animate-fade-up animate-fade-up-delay-1">
+            {% if orders %}
+            <div class="glass-card p-4">
+                <div class="table-responsive">
+                    <table class="table table-borderless align-middle mb-0 table-glass">
+                        <thead class="text-muted border-bottom border-muted">
+                            <tr>
+                                <th class="text-uppercase small fw-bold pb-3">Order Information</th>
+                                <th class="text-uppercase small fw-bold pb-3">Date</th>
+                                <th class="text-uppercase small fw-bold pb-3">Total Amount</th>
+                                <th class="text-uppercase small fw-bold pb-3">Status</th>
+                                <th class="text-uppercase small fw-bold pb-3 text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in orders %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="bg-primary bg-opacity-10 text-primary rounded d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                            <i class="fas fa-box"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-1 fw-bold text-dark">#{{ order.order_number }}</h6>
+                                            <small class="text-muted d-block">{{ order.shipping_name }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="text-dark">{{ order.created_at|date:"M d, Y" }}</div>
+                                    <small class="text-muted">{{ order.created_at|date:"h:i A" }}</small>
+                                </td>
+                                <td class="fw-bold text-dark">
+                                    ₹{{ order.total_amount }}
+                                </td>
+                                <td>
+                                    <span class="badge rounded-pill bg-opacity-25 py-2 px-3 fw-bold
+                                        {% if order.status == 'delivered' %}bg-success text-success border border-success
+                                        {% elif order.status == 'shipped' %}bg-info text-info border border-info
+                                        {% elif order.status == 'processing' or order.status == 'confirmed' %}bg-warning text-warning border border-warning
+                                        {% elif order.status == 'cancelled' %}bg-danger text-danger border border-danger
+                                        {% else %}bg-secondary text-secondary border border-secondary{% endif %}">
+                                        <i class="fas {% if order.status == 'delivered' %}fa-check-circle{% elif order.status == 'shipped' %}fa-truck{% elif order.status == 'cancelled' %}fa-times-circle{% else %}fa-clock{% endif %} me-1"></i>
+                                        {{ order.get_status_display }}
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <a href="{% url 'order_details' order.id %}" class="btn btn-outline-primary btn-sm px-4 fw-bold" style="border-radius: var(--radius-xl);">
+                                        View Details
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% else %}
+            <div class="glass-card fancy-box p-5 text-center">
+                <div class="mb-4 text-muted opacity-50" style="font-size: 4rem;">
+                    <i class="fas fa-box-open"></i>
+                </div>
+                <h3 class="mb-3">No orders found</h3>
+                <p class="text-muted mb-4">You haven't placed any orders yet. Once you do, they will appear here.</p>
+                <a href="{% url 'products' %}" class="btn btn-primary px-5 py-2 fw-bold shadow-sm" style="border-radius: var(--radius-xl); background: linear-gradient(135deg, var(--wave-aqua), var(--indigo)); border: none;">
+                    Start Shopping <i class="fas fa-arrow-right ms-2"></i>
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}

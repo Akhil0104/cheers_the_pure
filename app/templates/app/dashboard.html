@@ -1,0 +1,667 @@
+{% extends 'app/base.html' %}
+
+{% block title %}Dashboard - CheersThePure{% endblock %}
+
+{% block content %}
+<section class="section dashboard-section" style="padding: 2rem;">
+    <div class="section-header" style="border-bottom: 2px solid #f1f5f9; padding-bottom: 1.5rem; margin-bottom: 1.5rem;">
+        <h1>Dashboard</h1>
+        <p>Welcome back, {{ request.user.username }}. {% if is_admin %}Here is a summary of your B2B sales and catalog inventory operations.{% else %}Track your submitted B2B quote estimates below.{% endif %}</p>
+    </div>
+
+    {% if is_admin %}
+        <!-- Admin Dashboard Interface -->
+        
+        <!-- Tab Headers -->
+        <div class="tab-container">
+            <div class="tab-headers" style="display: flex; flex-wrap: wrap; gap: 0.5rem; border-bottom: 2px solid #e2e8f0; margin-bottom: 2rem;">
+                <button class="tab-header active" onclick="switchTab('overview')" data-tab="overview" style="padding: 0.85rem 1.5rem; border: none; background: transparent; font-weight: 700; cursor: pointer; color: var(--muted); border-bottom: 3px solid transparent; font-size: 1rem; transition: all 0.3s;">
+                    📊 Overview
+                </button>
+                <button class="tab-header" onclick="switchTab('quotes')" data-tab="quotes" style="padding: 0.85rem 1.5rem; border: none; background: transparent; font-weight: 700; cursor: pointer; color: var(--muted); border-bottom: 3px solid transparent; font-size: 1rem; transition: all 0.3s;">
+                    📋 Quote Requests ({{ quote_requests_count }})
+                </button>
+                <button class="tab-header" onclick="switchTab('messages')" data-tab="messages" style="padding: 0.85rem 1.5rem; border: none; background: transparent; font-weight: 700; cursor: pointer; color: var(--muted); border-bottom: 3px solid transparent; font-size: 1rem; transition: all 0.3s;">
+                    💬 Customer Messages ({{ messages_count }})
+                </button>
+                <button class="tab-header" onclick="switchTab('products')" data-tab="products" style="padding: 0.85rem 1.5rem; border: none; background: transparent; font-weight: 700; cursor: pointer; color: var(--muted); border-bottom: 3px solid transparent; font-size: 1rem; transition: all 0.3s;">
+                    📦 Products ({{ products_count }})
+                </button>
+                <button class="tab-header" onclick="switchTab('categories')" data-tab="categories" style="padding: 0.85rem 1.5rem; border: none; background: transparent; font-weight: 700; cursor: pointer; color: var(--muted); border-bottom: 3px solid transparent; font-size: 1rem; transition: all 0.3s;">
+                    🗂️ Categories ({{ categories_count }})
+                </button>
+                <button class="tab-header" onclick="switchTab('users')" data-tab="users" style="padding: 0.85rem 1.5rem; border: none; background: transparent; font-weight: 700; cursor: pointer; color: var(--muted); border-bottom: 3px solid transparent; font-size: 1rem; transition: all 0.3s;">
+                    👥 User Management ({{ users_count }})
+                </button>
+            </div>
+
+            <!-- Tab 1: Overview -->
+            <div id="tab-overview" class="tab-content">
+                <!-- operations guide header -->
+                <div style="background: linear-gradient(135deg, #1e3a8a 0%, #0d9488 100%); color: #ffffff; padding: 1.75rem; border-radius: 1rem; margin-bottom: 2rem; box-shadow: 0 10px 30px rgba(13, 148, 136, 0.1); position: relative; overflow: hidden;">
+                    <div style="position: absolute; right: -20px; bottom: -20px; font-size: 8rem; opacity: 0.08; pointer-events: none; user-select: none;">💧</div>
+                    <h2 style="margin-top: 0; font-size: 1.4rem; color: #ffffff; display: flex; align-items: center; gap: 0.5rem; font-weight: 800;">
+                        <span>💧</span> Operations Command Center
+                    </h2>
+                    <p style="margin: 0.5rem 0 0; line-height: 1.6; font-size: 0.95rem; max-width: 850px; opacity: 0.95;">
+                        Welcome to the simplified CheersThePure administration dashboard. From here, you can manage custom pricing quotes, view general customer inquiries, update product inventory items, and manage system user permissions in real time. Use the Quick Actions below or the tab headers above to coordinate your operations.
+                    </p>
+                </div>
+
+                <!-- Quick Action command cards -->
+                <h3 style="margin-bottom: 1rem; color: var(--fg); font-size: 1.2rem; font-weight: 700;">Quick-Action Shortcuts</h3>
+                <div class="quick-actions-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 2.5rem;">
+                    <div class="quick-action-card" onclick="switchTab('quotes')" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.25rem; cursor: pointer; transition: all 0.25s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between; border-left: 4px solid var(--accent);">
+                        <div>
+                            <h3 style="margin: 0 0 0.5rem; font-size: 1.05rem; color: var(--fg); display: flex; align-items: center; gap: 0.4rem; font-weight: 700;">📋 B2B Quotes</h3>
+                            <p style="margin: 0; font-size: 0.84rem; color: var(--muted); line-height: 1.45;">Review client inquiries, submit unit prices in INR (₹), and verify complete online checkouts.</p>
+                        </div>
+                        <span style="display: inline-block; margin-top: 1rem; font-size: 0.82rem; font-weight: 700; color: var(--accent);">Manage Quotes ({{ quote_requests_count }}) →</span>
+                    </div>
+                    
+                    <div class="quick-action-card" onclick="switchTab('messages')" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.25rem; cursor: pointer; transition: all 0.25s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between; border-left: 4px solid #f59e0b;">
+                        <div>
+                            <h3 style="margin: 0 0 0.5rem; font-size: 1.05rem; color: var(--fg); display: flex; align-items: center; gap: 0.4rem; font-weight: 700;">💬 Customer Messages</h3>
+                            <p style="margin: 0; font-size: 0.84rem; color: var(--muted); line-height: 1.45;">Browse support queries and contact submissions sent by visitors on the Contact Us page.</p>
+                        </div>
+                        <span style="display: inline-block; margin-top: 1rem; font-size: 0.82rem; font-weight: 700; color: #d97706;">Read Inquiries ({{ messages_count }}) →</span>
+                    </div>
+
+                    <div class="quick-action-card" onclick="switchTab('products')" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.25rem; cursor: pointer; transition: all 0.25s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between; border-left: 4px solid #10b981;">
+                        <div>
+                            <h3 style="margin: 0 0 0.5rem; font-size: 1.05rem; color: var(--fg); display: flex; align-items: center; gap: 0.4rem; font-weight: 700;">📦 Products Catalog</h3>
+                            <p style="margin: 0; font-size: 0.84rem; color: var(--muted); line-height: 1.45;">Add water bottles, set custom capacities, manage pricing tiers, and configure images.</p>
+                        </div>
+                        <span style="display: inline-block; margin-top: 1rem; font-size: 0.82rem; font-weight: 700; color: #059669;">Edit Inventory ({{ products_count }}) →</span>
+                    </div>
+
+                    <div class="quick-action-card" onclick="switchTab('users')" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1.25rem; cursor: pointer; transition: all 0.25s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between; border-left: 4px solid #8b5cf6;">
+                        <div>
+                            <h3 style="margin: 0 0 0.5rem; font-size: 1.05rem; color: var(--fg); display: flex; align-items: center; gap: 0.4rem; font-weight: 700;">👥 User Accounts</h3>
+                            <p style="margin: 0; font-size: 0.84rem; color: var(--muted); line-height: 1.45;">Configure customer profile metadata and upgrade/downgrade roles instantly.</p>
+                        </div>
+                        <span style="display: inline-block; margin-top: 1rem; font-size: 0.82rem; font-weight: 700; color: #6d28d9;">Configure Accounts ({{ users_count }}) →</span>
+                    </div>
+                </div>
+
+                <style>
+                .quick-action-card:hover {
+                    transform: translateY(-3px);
+                    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08) !important;
+                    border-color: #cbd5e1 !important;
+                }
+                </style>
+
+                <!-- Statistics Metrics Grid -->
+                <h3 style="margin-bottom: 1rem; color: var(--fg); font-size: 1.2rem; font-weight: 700;">System Breakdown Stats</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h2>{{ products_count }}</h2>
+                        <p>Products</p>
+                    </div>
+                    <div class="stat-card">
+                        <h2>{{ categories_count }}</h2>
+                        <p>Categories</p>
+                    </div>
+                    <div class="stat-card">
+                        <h2>{{ testimonials_count }}</h2>
+                        <p>Testimonials</p>
+                    </div>
+                    <div class="stat-card" style="background: linear-gradient(135deg,#f59e0b 0%, #d97706 100%);">
+                        <h2>{{ messages_count }}</h2>
+                        <p>Customer Messages</p>
+                    </div>
+                    <div class="stat-card" style="background: linear-gradient(135deg,#8b5cf6 0%, #6d28d9 100%);">
+                        <h2>{{ quote_requests_count }}</h2>
+                        <p>Quote Requests</p>
+                    </div>
+                    <div class="stat-card" style="background: linear-gradient(135deg,#10b981 0%, #059669 100%);">
+                        <h2>{{ users_count }}</h2>
+                        <p>Registered Users</p>
+                    </div>
+                </div>
+
+                <div class="dashboard-chart" style="margin-top: 2.5rem;">
+                    <h3 style="margin-bottom: 1.5rem;">Site data breakdown</h3>
+                    <canvas id="dashboardChart" width="400" height="240" data-products="{{ products_count }}" data-categories="{{ categories_count }}" data-testimonials="{{ testimonials_count }}" data-messages="{{ messages_count }}" data-quotes="{{ quote_requests_count }}" data-users="{{ users_count }}"></canvas>
+                </div>
+            </div>
+
+            <!-- Tab 2: Quote Requests -->
+            <div id="tab-quotes" class="tab-content" style="display: none;">
+                <h2 style="margin-top: 0; color: var(--fg); font-size: 1.45rem; margin-bottom: 0.5rem;">B2B Quote Requests</h2>
+                
+                <!-- Help Info Card -->
+                <div style="background: #eff6ff; border-left: 4px solid #3b82f6; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem; font-size: 0.88rem; color: #1e40af; line-height: 1.5;">
+                    💡 <strong>How to manage?</strong> When a customer submits a quote request, it appears here. Click <strong>📝 Reply & Quote Price</strong> to inspect details and input a custom price proposal in INR (₹). The customer will be emailed their tracking portal immediately.
+                </div>
+
+                {% if quote_requests %}
+                    <!-- Search and Filter Controls -->
+                    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1.25rem; background: #f8fafc; padding: 0.75rem; border-radius: 0.75rem; border: 1px solid #e2e8f0;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; flex: 1; min-width: 280px;">
+                            <span style="font-size: 1.1rem;">🔍</span>
+                            <input type="text" id="quoteSearchInput" onkeyup="filterQuotesTable()" placeholder="Search quotes by Customer Name, Email, or Product Specs..." style="width: 100%; padding: 0.5rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.85rem; box-sizing: border-box; background: #ffffff;" />
+                        </div>
+                        <div style="display: flex; gap: 0.35rem; align-items: center; flex-wrap: wrap;">
+                            <span style="font-size: 0.82rem; font-weight: 700; color: var(--muted); margin-right: 0.25rem;">Status Filter:</span>
+                            <button type="button" class="quote-filter-btn active" onclick="filterQuotesStatus('all')" style="padding: 0.35rem 0.75rem; border: 1px solid #cbd5e1; background: #3b82f6; color: #ffffff; border-radius: 0.35rem; font-size: 0.82rem; font-weight: 700; cursor: pointer; transition: all 0.2s;">All</button>
+                            <button type="button" class="quote-filter-btn" onclick="filterQuotesStatus('pending')" style="padding: 0.35rem 0.75rem; border: 1px solid #cbd5e1; background: #ffffff; color: var(--fg); border-radius: 0.35rem; font-size: 0.82rem; font-weight: 700; cursor: pointer; transition: all 0.2s;">Pending</button>
+                            <button type="button" class="quote-filter-btn" onclick="filterQuotesStatus('contacted')" style="padding: 0.35rem 0.75rem; border: 1px solid #cbd5e1; background: #ffffff; color: var(--fg); border-radius: 0.35rem; font-size: 0.82rem; font-weight: 700; cursor: pointer; transition: all 0.2s;">Contacted</button>
+                            <button type="button" class="quote-filter-btn" onclick="filterQuotesStatus('quoted')" style="padding: 0.35rem 0.75rem; border: 1px solid #cbd5e1; background: #ffffff; color: var(--fg); border-radius: 0.35rem; font-size: 0.82rem; font-weight: 700; cursor: pointer; transition: all 0.2s;">Quoted</button>
+                            <button type="button" class="quote-filter-btn" onclick="filterQuotesStatus('completed')" style="padding: 0.35rem 0.75rem; border: 1px solid #cbd5e1; background: #ffffff; color: var(--fg); border-radius: 0.35rem; font-size: 0.82rem; font-weight: 700; cursor: pointer; transition: all 0.2s;">Completed</button>
+                        </div>
+                    </div>
+
+                    <div style="overflow-x: auto;">
+                        <table id="quotesTable" style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.92rem; margin-top: 0.5rem; background: #ffffff;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid #f1f5f9; color: var(--muted); background: #f8fafc;">
+                                    <th style="padding: 1rem;">ID</th>
+                                    <th style="padding: 1rem;">Customer</th>
+                                    <th style="padding: 1rem;">Product / Specs</th>
+                                    <th style="padding: 1rem;">Qty</th>
+                                    <th style="padding: 1rem;">Verified</th>
+                                    <th style="padding: 1rem;">Status</th>
+                                    <th style="padding: 1rem;">Date</th>
+                                    <th style="padding: 1rem; text-align: right;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for quote in quote_requests %}
+                                    <tr data-status="{{ quote.status }}" style="border-bottom: 1px solid #f1f5f9; transition: background 0.2s;" onmouseover="this.style.background='#fbfdff'" onmouseout="this.style.background='transparent'">
+                                        <td style="padding: 1rem; font-weight: 600; color: var(--muted);">#{{ quote.id }}</td>
+                                        <td style="padding: 1rem;">
+                                            <strong style="color: var(--fg); display: block;">{{ quote.name }}</strong>
+                                            <span style="font-size: 0.8rem; color: var(--muted);">{{ quote.email }}</span>
+                                        </td>
+                                        <td style="padding: 1rem;">
+                                            <strong style="color: var(--fg);">{% if quote.product %}{{ quote.product.name }}{% else %}Custom Order{% endif %}</strong>
+                                            <span style="display: block; font-size: 0.8rem; color: var(--muted);">Size: {{ quote.size }}</span>
+                                        </td>
+                                        <td style="padding: 1rem; font-weight: 700; color: var(--fg);">{{ quote.quantity }}</td>
+                                        <td style="padding: 1rem;">
+                                            <span style="font-weight: 600; padding: 0.2rem 0.6rem; border-radius: 0.5rem; font-size: 0.8rem;
+                                                background: {% if quote.email_verified %}#ecfdf5; color: #166534{% else %}#fee2e2; color: #991b1b{% endif %};">
+                                                {% if quote.email_verified %}✓ Verified{% else %}✗ Unverified{% endif %}
+                                            </span>
+                                        </td>
+                                        <td style="padding: 1rem; text-transform: capitalize;">
+                                            <span style="font-weight: 700; font-size: 0.8rem; padding: 0.2rem 0.6rem; border-radius: 0.5rem;
+                                                background: {% if quote.status == 'pending' %}#eff6ff; color: #1e40af;
+                                                {% elif quote.status == 'contacted' %}#fffbeb; color: #854d0e;
+                                                {% elif quote.status == 'quoted' %}#f5f3ff; color: #5b21b6;
+                                                {% elif quote.status == 'completed' %}#ecfdf5; color: #166534;{% endif %};">
+                                                {% if quote.status == 'pending' %}⏳ Pending Review
+                                                {% elif quote.status == 'contacted' %}📞 Contacted
+                                                {% elif quote.status == 'quoted' %}💬 Quote Sent
+                                                {% elif quote.status == 'completed' %}✅ Paid & Completed{% endif %}
+                                            </span>
+                                        </td>
+                                        <td style="padding: 1rem; color: var(--muted);">{{ quote.created_at|date:"M d, Y" }}</td>
+                                        <td style="padding: 1rem; text-align: right;">
+                                            <a href="{% url 'admin_quote_detail' quote.id %}" class="button" style="padding: 0.4rem 0.85rem; font-size: 0.8rem; border-radius: 6px; font-weight: 700; display: inline-flex; align-items: center; gap: 0.2rem;">📝 Reply & Quote Price</a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p style="color: var(--muted); text-align: center; padding: 2rem 0;">No quote requests submitted yet.</p>
+                {% endif %}
+            </div>
+
+            <!-- Tab 3: Customer Messages -->
+            <div id="tab-messages" class="tab-content" style="display: none;">
+                <h2 style="margin-top: 0; color: var(--fg); font-size: 1.45rem; margin-bottom: 0.5rem;">Customer Inquiries</h2>
+                
+                <!-- Help Info Card -->
+                <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem; font-size: 0.88rem; color: #78350f; line-height: 1.5;">
+                    💡 <strong>How to manage?</strong> Questions or support tickets submitted by guests via the contact form are listed here. Click <strong>📖 Read Inquiry</strong> to review customer details and access their email address.
+                </div>
+
+                {% if contact_messages %}
+                    <!-- Search Input -->
+                    <div style="margin-bottom: 1.25rem; background: #f8fafc; padding: 0.75rem; border-radius: 0.75rem; border: 1px solid #e2e8f0; display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="font-size: 1.1rem;">🔍</span>
+                        <input type="text" id="messageSearchInput" onkeyup="filterMessagesTable()" placeholder="Search inquiries by Sender Name, Email, or Subject..." style="width: 100%; padding: 0.5rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.85rem; box-sizing: border-box; background: #ffffff;" />
+                    </div>
+
+                    <div style="overflow-x: auto;">
+                        <table id="messagesTable" style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.92rem; margin-top: 0.5rem; background: #ffffff;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid #f1f5f9; color: var(--muted); background: #f8fafc;">
+                                    <th style="padding: 1rem;">Date</th>
+                                    <th style="padding: 1rem;">Name</th>
+                                    <th style="padding: 1rem;">Email</th>
+                                    <th style="padding: 1rem;">Subject</th>
+                                    <th style="padding: 1rem; text-align: right;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for msg in contact_messages %}
+                                    <tr style="border-bottom: 1px solid #f1f5f9; transition: background 0.2s;" onmouseover="this.style.background='#fbfdff'" onmouseout="this.style.background='transparent'">
+                                        <td style="padding: 1rem; color: var(--muted);">{{ msg.created_at|date:"M d, Y H:i" }}</td>
+                                        <td style="padding: 1rem; font-weight: 600; color: var(--fg);">{{ msg.name }}</td>
+                                        <td style="padding: 1rem;"><a href="mailto:{{ msg.email }}" style="color: var(--accent);">{{ msg.email }}</a></td>
+                                        <td style="padding: 1rem; font-weight: 600; color: var(--fg);">{{ msg.subject }}</td>
+                                        <td style="padding: 1rem; text-align: right;">
+                                            <a href="{% url 'admin_contact_detail' msg.id %}" class="button button-secondary" style="padding: 0.4rem 0.85rem; font-size: 0.8rem; border-radius: 6px; font-weight: 700; display: inline-flex; align-items: center; gap: 0.2rem;">📖 Read Inquiry</a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p style="color: var(--muted); text-align: center; padding: 2rem 0;">No messages received.</p>
+                {% endif %}
+            </div>
+
+            <!-- Tab 4: Products -->
+            <div id="tab-products" class="tab-content" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
+                    <h2 style="margin: 0; color: var(--fg); font-size: 1.45rem;">Product Catalog</h2>
+                    <a href="{% url 'admin_product_add' %}" class="button" style="padding: 0.6rem 1.2rem; font-size: 0.9rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.25rem;">➕ Add New Product</a>
+                </div>
+                
+                <!-- Help Info Card -->
+                <div style="background: #f0fdf4; border-left: 4px solid #22c55e; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem; font-size: 0.88rem; color: #14532d; line-height: 1.5;">
+                    💡 <strong>How to manage?</strong> Manage the bottles displayed in the shopping section. You can customize the name, pricing, capacity settings, and upload images.
+                </div>
+
+                {% if products %}
+                    <!-- Search Input -->
+                    <div style="margin-bottom: 1.25rem; background: #f8fafc; padding: 0.75rem; border-radius: 0.75rem; border: 1px solid #e2e8f0; display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="font-size: 1.1rem;">🔍</span>
+                        <input type="text" id="productSearchInput" onkeyup="filterProductsTable()" placeholder="Search catalog by Product Name, Category, or Capacity..." style="width: 100%; padding: 0.5rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.85rem; box-sizing: border-box; background: #ffffff;" />
+                    </div>
+
+                    <div style="overflow-x: auto;">
+                        <table id="productsTable" style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.92rem; margin-top: 0.5rem; background: #ffffff;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid #f1f5f9; color: var(--muted); background: #f8fafc;">
+                                    <th style="padding: 1rem; width: 60px;">Image</th>
+                                    <th style="padding: 1rem;">Product Name</th>
+                                    <th style="padding: 1rem;">Category</th>
+                                    <th style="padding: 1rem;">Capacity</th>
+                                    <th style="padding: 1rem;">Price</th>
+                                    <th style="padding: 1rem;">Featured</th>
+                                    <th style="padding: 1rem; text-align: right;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for prod in products %}
+                                    <tr style="border-bottom: 1px solid #f1f5f9; transition: background 0.2s;" onmouseover="this.style.background='#fbfdff'" onmouseout="this.style.background='transparent'">
+                                        <td style="padding: 0.75rem 1rem;">
+                                            {% if prod.image %}
+                                                <img src="{{ prod.image.url }}" alt="{{ prod.name }}" style="width: 40px; height: 40px; border-radius: 6px; object-fit: cover; border: 1px solid #e2e8f0;" />
+                                            {% elif prod.image_url %}
+                                                <img src="{{ prod.image_url }}" alt="{{ prod.name }}" style="width: 40px; height: 40px; border-radius: 6px; object-fit: cover; border: 1px solid #e2e8f0;" />
+                                            {% else %}
+                                                <div style="width: 40px; height: 40px; border-radius: 6px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: var(--muted); font-weight: bold;">N/A</div>
+                                            {% endif %}
+                                        </td>
+                                        <td style="padding: 1rem;"><strong style="color: var(--fg);">{{ prod.name }}</strong></td>
+                                        <td style="padding: 1rem; color: var(--muted);">{{ prod.category.name|default:"—" }}</td>
+                                        <td style="padding: 1rem; font-weight: 600;">{{ prod.capacity }}</td>
+                                        <td style="padding: 1rem; font-weight: 700; color: var(--accent);">
+                                            {% if prod.capacity == '500 ml' or prod.capacity == '2 litres' %}
+                                                TBD
+                                            {% else %}
+                                                ₹{{ prod.price|floatformat:0 }}
+                                            {% endif %}
+                                        </td>
+                                        <td style="padding: 1rem; font-weight: 600; color: {% if prod.is_featured %}#10b981{% else %}#cbd5e1{% endif %};">
+                                            {% if prod.is_featured %}Yes{% else %}No{% endif %}
+                                        </td>
+                                        <td style="padding: 1rem; text-align: right; display: flex; gap: 0.5rem; justify-content: flex-end; align-items: center;">
+                                            <a href="{% url 'admin_product_edit' prod.id %}" class="button button-secondary" style="padding: 0.4rem 0.85rem; font-size: 0.8rem; border-radius: 6px; font-weight: 700; display: inline-flex; align-items: center; gap: 0.2rem;">✏️ Edit</a>
+                                            <form action="{% url 'admin_product_delete' prod.id %}" method="post" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete product: {{ prod.name }}?');">
+                                                {% csrf_token %}
+                                                <button type="submit" class="button" style="background: #ef4444; padding: 0.4rem 0.85rem; font-size: 0.8rem; border-radius: 6px; font-weight: 700; display: inline-flex; align-items: center; gap: 0.2rem;">🗑️ Delete</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p style="color: var(--muted); text-align: center; padding: 2rem 0;">No products cataloged.</p>
+                {% endif %}
+            </div>
+
+            <!-- Tab 5: Categories -->
+            <div id="tab-categories" class="tab-content" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
+                    <h2 style="margin: 0; color: var(--fg); font-size: 1.45rem;">Product Categories</h2>
+                    <a href="{% url 'admin_category_add' %}" class="button" style="padding: 0.6rem 1.2rem; font-size: 0.9rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.25rem;">➕ Add New Category</a>
+                </div>
+                
+                <!-- Help Info Card -->
+                <div style="background: #faf5ff; border-left: 4px solid #a855f7; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem; font-size: 0.88rem; color: #581c87; line-height: 1.5;">
+                    💡 <strong>How to manage?</strong> Categories group your water bottles (e.g. Eco-Hydration, Luxury Glass, Mineral Water). This helps customers browse categories easily.
+                </div>
+
+                {% if categories %}
+                    <!-- Search Input -->
+                    <div style="margin-bottom: 1.25rem; background: #f8fafc; padding: 0.75rem; border-radius: 0.75rem; border: 1px solid #e2e8f0; display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="font-size: 1.1rem;">🔍</span>
+                        <input type="text" id="categorySearchInput" onkeyup="filterCategoriesTable()" placeholder="Search categories by Category Name or Description..." style="width: 100%; padding: 0.5rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.85rem; box-sizing: border-box; background: #ffffff;" />
+                    </div>
+
+                    <div style="overflow-x: auto;">
+                        <table id="categoriesTable" style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.92rem; margin-top: 0.5rem; background: #ffffff;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid #f1f5f9; color: var(--muted); background: #f8fafc;">
+                                    <th style="padding: 1rem; width: 60px;">ID</th>
+                                    <th style="padding: 1rem;">Category Name</th>
+                                    <th style="padding: 1rem;">Description</th>
+                                    <th style="padding: 1rem; text-align: right;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for cat in categories %}
+                                    <tr style="border-bottom: 1px solid #f1f5f9; transition: background 0.2s;" onmouseover="this.style.background='#fbfdff'" onmouseout="this.style.background='transparent'">
+                                        <td style="padding: 1rem; font-weight: 600; color: var(--muted);">#{{ cat.id }}</td>
+                                        <td style="padding: 1rem;"><strong style="color: var(--fg);">{{ cat.name }}</strong></td>
+                                        <td style="padding: 1rem; color: var(--muted); max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                            {{ cat.description|default:"—" }}
+                                        </td>
+                                        <td style="padding: 1rem; text-align: right; display: flex; gap: 0.5rem; justify-content: flex-end; align-items: center;">
+                                            <a href="{% url 'admin_category_edit' cat.id %}" class="button button-secondary" style="padding: 0.4rem 0.85rem; font-size: 0.8rem; border-radius: 6px; font-weight: 700; display: inline-flex; align-items: center; gap: 0.25rem;">✏️ Edit</a>
+                                            <form action="{% url 'admin_category_delete' cat.id %}" method="post" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete category: {{ cat.name }}? This will not delete products, but will detach them.');">
+                                                {% csrf_token %}
+                                                <button type="submit" class="button" style="background: #ef4444; padding: 0.4rem 0.85rem; font-size: 0.8rem; border-radius: 6px; font-weight: 700; display: inline-flex; align-items: center; gap: 0.25rem;">🗑️ Delete</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p style="color: var(--muted); text-align: center; padding: 2rem 0;">No categories registered.</p>
+                {% endif %}
+            </div>
+
+            <!-- Tab 6: User Management -->
+            <div id="tab-users" class="tab-content" style="display: none;">
+                <h2 style="margin-top: 0; color: var(--fg); font-size: 1.45rem; margin-bottom: 0.5rem;">Registered User Accounts</h2>
+                
+                <!-- Help Info Card -->
+                <div style="background: #ecfeff; border-left: 4px solid #06b6d4; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem; font-size: 0.88rem; color: #164e63; line-height: 1.5;">
+                    💡 <strong>What do roles mean?</strong> Choose a role to alter website privileges:
+                    <ul style="margin: 0.25rem 0 0; padding-left: 1.2rem; font-size: 0.84rem; display: flex; flex-direction: column; gap: 0.15rem;">
+                        <li>👤 <strong>Customer</strong>: Regular visitors who request bottle quotes.</li>
+                        <li>🚚 <strong>Distributor</strong>: Large-scale buyers with unique B2B pricing configurations.</li>
+                        <li>🤝 <strong>Partner</strong>: Franchise / co-branding corporate partners.</li>
+                        <li>🛡️ <strong>Staff</strong>: Operational managers. Setting a user to <strong>Staff</strong> grants full access to this Operations Dashboard.</li>
+                    </ul>
+                </div>
+
+                {% if users %}
+                    <!-- Search Input -->
+                    <div style="margin-bottom: 1.25rem; background: #f8fafc; padding: 0.75rem; border-radius: 0.75rem; border: 1px solid #e2e8f0; display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="font-size: 1.1rem;">🔍</span>
+                        <input type="text" id="userSearchInput" onkeyup="filterUsersTable()" placeholder="Search users by Username, Email, Company, or Current Role..." style="width: 100%; padding: 0.5rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.85rem; box-sizing: border-box; background: #ffffff;" />
+                    </div>
+
+                    <div style="overflow-x: auto;">
+                        <table id="usersTable" style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.92rem; margin-top: 0.5rem; background: #ffffff;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid #f1f5f9; color: var(--muted); background: #f8fafc;">
+                                    <th style="padding: 1rem;">Username</th>
+                                    <th style="padding: 1rem;">Email</th>
+                                    <th style="padding: 1rem;">Company Name</th>
+                                    <th style="padding: 1rem;">Phone</th>
+                                    <th style="padding: 1rem;">Current Role</th>
+                                    <th style="padding: 1rem; text-align: right;">Manage Role (Real-time)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for u in users %}
+                                    <tr style="border-bottom: 1px solid #f1f5f9; transition: background 0.2s;" onmouseover="this.style.background='#fbfdff'" onmouseout="this.style.background='transparent'">
+                                        <td style="padding: 1rem;"><strong style="color: var(--fg);">{{ u.username }}</strong></td>
+                                        <td style="padding: 1rem; color: var(--muted);">{{ u.email }}</td>
+                                        <td style="padding: 1rem;">{{ u.profile.company_name|default:"—" }}</td>
+                                        <td style="padding: 1rem;">{{ u.profile.phone|default:"—" }}</td>
+                                        <td style="padding: 1rem;">
+                                            <span style="font-weight: 700; font-size: 0.8rem; padding: 0.2rem 0.5rem; border-radius: 0.5rem;
+                                                background: {% if u.profile.role == 'staff' %}#ecfdf5; color: #166534;
+                                                {% elif u.profile.role == 'distributor' %}#f5f3ff; color: #5b21b6;
+                                                {% elif u.profile.role == 'partner' %}#fffbeb; color: #854d0e;
+                                                {% else %}#eff6ff; color: #1e40af;{% endif %};">
+                                                {{ u.profile.get_role_display|default:"Customer" }}
+                                            </span>
+                                        </td>
+                                        <td style="padding: 1rem; text-align: right;">
+                                            <form action="{% url 'admin_update_user_role' u.id %}" method="post" style="display: inline-flex; gap: 0.5rem; align-items: center; margin: 0;">
+                                                {% csrf_token %}
+                                                <select name="role" style="padding: 0.35rem 0.6rem; font-size: 0.82rem; border-radius: 6px; background: #ffffff; border: 1px solid #cbd5e1; font-weight: 600;">
+                                                    {% for r_val, r_label in role_choices %}
+                                                        <option value="{{ r_val }}" {% if u.profile.role == r_val or not u.profile.role and r_val == 'customer' %}selected{% endif %}>{{ r_label }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                                <button type="submit" class="button" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; border-radius: 6px; font-weight: 700; display: inline-flex; align-items: center; gap: 0.15rem;">💾 Save Role</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p style="color: var(--muted); text-align: center; padding: 2rem 0;">No registered users found.</p>
+                {% endif %}
+            </div>
+        </div>
+
+    {% else %}
+        <!-- Client Dashboard Interface -->
+        <h2 style="font-size: 1.4rem; color: var(--fg); margin-bottom: 0.5rem;">Your Quote Inquiries</h2>
+        <p style="color: var(--muted); margin: 0 0 1.5rem; font-size: 0.95rem;">You are logged in with email: <strong>{{ request.user.email }}</strong>. Here are the quote requests matching your email address.</p>
+        
+        {% if quote_requests %}
+            <div style="overflow-x: auto; background: #ffffff; border-radius: 1rem; border: 1px solid #eef2ff;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.95rem;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid #f1f5f9; color: var(--muted); background: #f8fafc;">
+                            <th style="padding: 1rem;">Date</th>
+                            <th style="padding: 1rem;">Bottle Product</th>
+                            <th style="padding: 1rem;">Size Capacity</th>
+                            <th style="padding: 1rem;">Quantity</th>
+                            <th style="padding: 1rem;">Verified</th>
+                            <th style="padding: 1rem;">Status</th>
+                            <th style="padding: 1rem; text-align: right;">Tracker Link</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for quote in quote_requests %}
+                            <tr style="border-bottom: 1px solid #f1f5f9; transition: background 0.2s;" onmouseover="this.style.background='#fbfdff'" onmouseout="this.style.background='transparent'">
+                                <td style="padding: 1rem; color: var(--muted);">{{ quote.created_at|date:"M d, Y" }}</td>
+                                <td style="padding: 1rem; font-weight: 600; color: var(--fg);">
+                                    {% if quote.product %}{{ quote.product.name }}{% else %}Custom Order{% endif %}
+                                </td>
+                                <td style="padding: 1rem; color: var(--muted);">{{ quote.size }}</td>
+                                <td style="padding: 1rem; font-weight: 700; color: var(--fg);">{{ quote.quantity }}</td>
+                                <td style="padding: 1rem;">
+                                    <span style="font-weight: 600; padding: 0.2rem 0.5rem; border-radius: 0.5rem; font-size: 0.8rem;
+                                        background: {% if quote.email_verified %}#ecfdf5; color: #166534{% else %}#fee2e2; color: #991b1b{% endif %};">
+                                        {% if quote.email_verified %}Yes{% else %}No{% endif %}
+                                    </span>
+                                </td>
+                                <td style="padding: 1rem; text-transform: capitalize;">
+                                    <span style="font-weight: 700; font-size: 0.8rem; padding: 0.2rem 0.5rem; border-radius: 0.5rem;
+                                        background: {% if quote.status == 'pending' %}#eff6ff; color: #1e40af;
+                                        {% elif quote.status == 'contacted' %}#fffbeb; color: #854d0e;
+                                        {% elif quote.status == 'quoted' %}#f5f3ff; color: #5b21b6;
+                                        {% elif quote.status == 'completed' %}#ecfdf5; color: #166534;{% endif %};">
+                                        {{ quote.get_status_display }}
+                                    </span>
+                                </td>
+                                <td style="padding: 1rem; text-align: right;">
+                                    {% if quote.verification_token %}
+                                        <a href="{% url 'view_quote_status' quote.verification_token.token %}" class="button" style="padding: 0.4rem 0.85rem; font-size: 0.8rem; border-radius: 6px;">Open Tracker</a>
+                                    {% else %}
+                                        <span style="font-size: 0.8rem; color: var(--muted);">Token missing</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div style="text-align: center; padding: 3rem 1.5rem; background: #ffffff; border-radius: 1rem; border: 1px solid #eef2ff;">
+                <p style="color: var(--muted); font-size: 1rem; margin-bottom: 1rem;">We couldn't find any quote requests associated with email: <strong>{{ request.user.email }}</strong></p>
+                <a href="{% url 'order_request' %}" class="button">Submit a Quote Request</a>
+            </div>
+        {% endif %}
+    {% endif %}
+</section>
+
+{% if is_admin %}
+<script>
+function switchTab(tabId) {
+    // Hide all tab contents
+    document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+    
+    // Reset all tab header styles
+    document.querySelectorAll('.tab-header').forEach(el => {
+        el.classList.remove('active');
+        el.style.color = 'var(--muted)';
+        el.style.borderBottomColor = 'transparent';
+    });
+    
+    // Show selected tab content
+    const targetContent = document.getElementById('tab-' + tabId);
+    if (targetContent) targetContent.style.display = 'block';
+    
+    // Apply active styles to selected header
+    const targetHeader = document.querySelector(`.tab-header[data-tab="${tabId}"]`);
+    if (targetHeader) {
+        targetHeader.classList.add('active');
+        targetHeader.style.color = 'var(--accent)';
+        targetHeader.style.borderBottomColor = 'var(--accent)';
+    }
+}
+
+// Search and Filter Functions for Operations Table
+let currentQuoteStatusFilter = 'all';
+
+function filterQuotesTable() {
+    const searchVal = document.getElementById('quoteSearchInput').value.toLowerCase();
+    const rows = document.querySelectorAll('#quotesTable tbody tr');
+    
+    rows.forEach(row => {
+        const customerName = row.cells[1] ? row.cells[1].innerText.toLowerCase() : '';
+        const productSpecs = row.cells[2] ? row.cells[2].innerText.toLowerCase() : '';
+        const status = row.getAttribute('data-status') || '';
+        
+        const matchesSearch = customerName.includes(searchVal) || productSpecs.includes(searchVal);
+        const matchesStatus = (currentQuoteStatusFilter === 'all' || status === currentQuoteStatusFilter);
+        
+        if (matchesSearch && matchesStatus) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+function filterQuotesStatus(status) {
+    currentQuoteStatusFilter = status;
+    
+    // Reset all filter buttons
+    document.querySelectorAll('.quote-filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+        btn.style.background = '#ffffff';
+        btn.style.color = 'var(--fg)';
+    });
+    
+    // Highlight selected filter button
+    const activeBtn = event.currentTarget;
+    activeBtn.classList.add('active');
+    activeBtn.style.background = '#3b82f6';
+    activeBtn.style.color = '#ffffff';
+    
+    filterQuotesTable();
+}
+
+function filterMessagesTable() {
+    const searchVal = document.getElementById('messageSearchInput').value.toLowerCase();
+    const rows = document.querySelectorAll('#messagesTable tbody tr');
+    
+    rows.forEach(row => {
+        const name = row.cells[1] ? row.cells[1].innerText.toLowerCase() : '';
+        const email = row.cells[2] ? row.cells[2].innerText.toLowerCase() : '';
+        const subject = row.cells[3] ? row.cells[3].innerText.toLowerCase() : '';
+        
+        if (name.includes(searchVal) || email.includes(searchVal) || subject.includes(searchVal)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+function filterProductsTable() {
+    const searchVal = document.getElementById('productSearchInput').value.toLowerCase();
+    const rows = document.querySelectorAll('#productsTable tbody tr');
+    
+    rows.forEach(row => {
+        const name = row.cells[1] ? row.cells[1].innerText.toLowerCase() : '';
+        const category = row.cells[2] ? row.cells[2].innerText.toLowerCase() : '';
+        const capacity = row.cells[3] ? row.cells[3].innerText.toLowerCase() : '';
+        
+        if (name.includes(searchVal) || category.includes(searchVal) || capacity.includes(searchVal)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+function filterCategoriesTable() {
+    const searchVal = document.getElementById('categorySearchInput').value.toLowerCase();
+    const rows = document.querySelectorAll('#categoriesTable tbody tr');
+    
+    rows.forEach(row => {
+        const name = row.cells[1] ? row.cells[1].innerText.toLowerCase() : '';
+        const description = row.cells[2] ? row.cells[2].innerText.toLowerCase() : '';
+        
+        if (name.includes(searchVal) || description.includes(searchVal)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+function filterUsersTable() {
+    const searchVal = document.getElementById('userSearchInput').value.toLowerCase();
+    const rows = document.querySelectorAll('#usersTable tbody tr');
+    
+    rows.forEach(row => {
+        const username = row.cells[0] ? row.cells[0].innerText.toLowerCase() : '';
+        const email = row.cells[1] ? row.cells[1].innerText.toLowerCase() : '';
+        const company = row.cells[2] ? row.cells[2].innerText.toLowerCase() : '';
+        const role = row.cells[4] ? row.cells[4].innerText.toLowerCase() : '';
+        
+        if (username.includes(searchVal) || email.includes(searchVal) || company.includes(searchVal) || role.includes(searchVal)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+</script>
+{% endif %}
+
+{# ── DispatchAI Chat Widget — visible to B2B users and staff ─────────────── #}
+{% include "app/dispatch_widget.html" %}
+
+{% endblock %}

@@ -1,0 +1,73 @@
+{% extends 'app/base.html' %}
+
+{% block title %}{{ title }} - CheersThePure{% endblock %}
+
+{% block content %}
+<section class="section centered-form">
+    <div style="border-bottom: 2px solid #f1f5f9; padding-bottom: 1rem; margin-bottom: 1.5rem;">
+        <a href="{% url 'dashboard' %}" style="font-size: 0.9rem; color: var(--accent); text-decoration: none;">← Back to Dashboard</a>
+        <h1 style="margin: 0.5rem 0 0; font-size: 1.75rem;">{{ title }}</h1>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="auth-form" style="margin: 0; max-width: 100%;">
+        {% csrf_token %}
+        
+        {% if form.errors %}
+            <div class="alert alert-error">
+                <strong>Please resolve the errors below:</strong>
+                <ul style="margin: 0.5rem 0 0; padding-left: 1rem;">
+                    {% for field, errors in form.errors.items %}
+                        <li><strong>{{ field|title }}:</strong> {{ errors|join:", " }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        <div class="form-group">
+            <label for="id_name">Product Name</label>
+            {{ form.name }}
+        </div>
+
+        <div class="form-group">
+            <label for="id_category">Category</label>
+            {{ form.category }}
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+                <label for="id_capacity">Bottle Capacity</label>
+                {{ form.capacity }}
+            </div>
+            <div class="form-group">
+                <label for="id_price">Price (₹)</label>
+                {{ form.price }}
+            </div>
+        </div>
+
+        <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem; margin: 1.5rem 0;">
+            {{ form.is_featured }}
+            <label for="id_is_featured" style="margin-bottom: 0; cursor: pointer;">Show in Featured Products Section</label>
+        </div>
+
+        <div class="form-group">
+            <label for="id_description">Product Description</label>
+            {{ form.description }}
+        </div>
+
+        <div class="form-group">
+            <label for="id_image">Upload Product Image (takes precedence)</label>
+            {{ form.image }}
+            {% if product.image %}
+                <p style="font-size: 0.82rem; color: var(--muted); margin: 0.25rem 0 0;">Current: <a href="{{ product.image.url }}" target="_blank" style="color: var(--accent);">{{ product.image.name }}</a></p>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="id_image_url">Or Specify Image URL (fallback)</label>
+            {{ form.image_url }}
+        </div>
+
+        <button type="submit" class="button" style="width: 100%; margin-top: 1rem;">{{ button_text }}</button>
+    </form>
+</section>
+{% endblock %}

@@ -1,0 +1,268 @@
+{% extends 'app/base.html' %}
+{% load static %}
+
+{% block title %}B2B Distributor Portal — Cheers the Pure Water{% endblock %}
+
+{% block content %}
+<section class="section">
+    <div class="section-header" style="margin-bottom: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+            <div>
+                <span class="badge" style="background: #0284c7; color: white; padding: 0.3rem 0.75rem; border-radius: 999px; font-weight: 700; font-size: 0.75rem; letter-spacing: 0.05em; text-transform: uppercase;">
+                    B2B Distributor Account
+                </span>
+                <h1 style="margin-top: 0.5rem; margin-bottom: 0.25rem;">
+                    B2B Corporate Dashboard
+                </h1>
+                <p style="color: #64748b; margin: 0;">
+                    {{ company_name|default:request.user.username }} — Wholesale supply, quotation tracking, and inventory distribution management.
+                </p>
+            </div>
+            
+            <div style="background: white; padding: 0.75rem 1.25rem; border-radius: 0.75rem; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.04); text-align: right;">
+                <div style="font-size: 0.75rem; color: #64748b; font-weight: 600; text-transform: uppercase;">Distributor ID</div>
+                <div style="font-size: 1.15rem; font-weight: 800; color: #0284c7; font-family: monospace;">{{ buyer_id }}</div>
+            </div>
+        </div>
+    </div>
+
+    {# ── Account & Delivery Details Card ── #}
+    <div class="card" style="padding: 1.25rem; margin-bottom: 1.5rem; border-radius: 1rem; border: 1px solid #e2e8f0; background: linear-gradient(135deg, #f8fafc 0%, #f0f9ff 100%);">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+            <div>
+                <div style="font-size: 0.75rem; color: #64748b; font-weight: 600;">Contact Person</div>
+                <div style="font-weight: 600; color: #0f172a;">{{ request.user.get_full_name|default:request.user.username }}</div>
+                <div style="font-size: 0.85rem; color: #475569;">{{ request.user.email }}</div>
+            </div>
+            {% if profile.phone %}
+            <div>
+                <div style="font-size: 0.75rem; color: #64748b; font-weight: 600;">Phone / WhatsApp</div>
+                <div style="font-weight: 600; color: #0f172a;">{{ profile.phone }}</div>
+            </div>
+            {% endif %}
+            {% if profile.industry %}
+            <div>
+                <div style="font-size: 0.75rem; color: #64748b; font-weight: 600;">Industry Sector</div>
+                <div style="font-weight: 600; color: #0f172a;">{{ profile.industry }}</div>
+            </div>
+            {% endif %}
+            <div>
+                <div style="font-size: 0.75rem; color: #64748b; font-weight: 600;">Primary Delivery Location</div>
+                <div style="font-weight: 600; color: #0f172a;">
+                    {% if profile.city %}{{ profile.city }}, {{ profile.state }}{% else %}Not specified (set during quote){% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ── Stylesheet for DispatchAI ── #}
+    <link rel="stylesheet" href="{% static 'app/dispatch_chat.css' %}">
+
+    {# ── DispatchAI B2B Assistant Interactive Console ── #}
+    <div id="dispatch-dashboard-chat" class="dai-embedded-console" style="margin-bottom: 2.25rem;">
+        {# Header #}
+        <div class="dai-header">
+            <div class="dai-header-main">
+                <div class="dai-avatar">🤖</div>
+                <div class="dai-header-title-wrap">
+                    <h3>
+                        DispatchAI
+                        <span class="dai-online-badge">Online</span>
+                    </h3>
+                    <div class="dai-header-desc">
+                        B2B Supply &amp; Distribution Assistant — Powered by Hindsight Contextual Memory &amp; Authoritative Catalog
+                    </div>
+                </div>
+            </div>
+            <div class="dai-header-actions">
+                <a href="{% url 'memory_demo' %}" class="dai-reset-btn" style="background: rgba(99,102,241,0.3); border-color: rgba(99,102,241,0.6); text-decoration: none;" title="Open dedicated evaluation demonstration">
+                    🧠 Memory Demo
+                </a>
+                <button type="button" class="dai-reset-btn" title="Start a fresh conversation">↺ New Session</button>
+            </div>
+        </div>
+
+        {# Suggested Business Prompts Bar #}
+        <div class="dai-prompts-bar">
+            <span class="dai-prompts-label">Suggested Inquiries:</span>
+            <div class="dai-prompts-container">
+                <button type="button" class="dai-prompt-chip" data-prompt="Show my recent order history.">
+                    📋 Show my recent order history.
+                </button>
+                <button type="button" class="dai-prompt-chip" data-prompt="Do you remember my delivery preference?">
+                    🚚 Do you remember my delivery preference?
+                </button>
+                <button type="button" class="dai-prompt-chip" data-prompt="I need my usual order again.">
+                    🔄 I need my usual order again.
+                </button>
+                <button type="button" class="dai-prompt-chip" data-prompt="What products are available?">
+                    📦 What products are available?
+                </button>
+                <button type="button" class="dai-prompt-chip" data-prompt="Prepare a quote for my next order.">
+                    💬 Prepare a quote for my next order.
+                </button>
+            </div>
+        </div>
+
+        {# Live Messages Area #}
+        <div class="dai-messages" id="dispatch-dashboard-messages" role="log" aria-live="polite" aria-atomic="false">
+            {# Dynamic message cards inserted by JS #}
+        </div>
+
+        {# Input Area #}
+        <div class="dai-input-area">
+            {% csrf_token %}
+            <div class="dai-input-wrapper">
+                <textarea
+                    class="dai-input"
+                    placeholder="Ask DispatchAI about wholesale pricing, stock availability, past orders, or delivery timing..."
+                    rows="1"
+                    aria-label="Message to DispatchAI"
+                    maxlength="4000"
+                ></textarea>
+                <div class="dai-input-hint">Press <strong>Enter</strong> to send, <strong>Shift + Enter</strong> for new line</div>
+            </div>
+            <button class="dai-send-btn" aria-label="Send message" type="button" disabled title="Send message to DispatchAI">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    {# ── Quick Action Buttons ── #}
+    <div style="display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap;">
+        <a class="button" href="{% url 'products' %}">Browse Wholesale Catalog</a>
+        <a class="button button-secondary" href="{% url 'order_request' %}">+ New Wholesale Quote</a>
+    </div>
+
+    {# ── Quotation Requests Section ── #}
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+        <h2 style="margin: 0; font-size: 1.35rem;">Your Wholesale Quotes ({{ quote_requests_count }})</h2>
+    </div>
+
+    {% if quote_requests %}
+        <div class="table-responsive" style="background: white; border-radius: 1rem; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.03);">
+            <table class="table" style="width: 100%; border-collapse: collapse; text-align: left;">
+                <thead style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                    <tr>
+                        <th style="padding: 0.85rem 1rem; font-size: 0.8rem; text-transform: uppercase; color: #64748b;">Ref #</th>
+                        <th style="padding: 0.85rem 1rem; font-size: 0.8rem; text-transform: uppercase; color: #64748b;">Product SKU</th>
+                        <th style="padding: 0.85rem 1rem; font-size: 0.8rem; text-transform: uppercase; color: #64748b;">Volume</th>
+                        <th style="padding: 0.85rem 1rem; font-size: 0.8rem; text-transform: uppercase; color: #64748b;">Delivery Timing</th>
+                        <th style="padding: 0.85rem 1rem; font-size: 0.8rem; text-transform: uppercase; color: #64748b;">Status</th>
+                        <th style="padding: 0.85rem 1rem; font-size: 0.8rem; text-transform: uppercase; color: #64748b;">Pricing / Reply</th>
+                        <th style="padding: 0.85rem 1rem; font-size: 0.8rem; text-transform: uppercase; color: #64748b;">Payment</th>
+                        <th style="padding: 0.85rem 1rem; font-size: 0.8rem; text-transform: uppercase; color: #64748b; text-align: right;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for quote in quote_requests %}
+                    <tr style="border-top: 1px solid #f1f5f9; transition: background 0.15s ease;">
+                        <td style="padding: 1rem; font-weight: 700; color: #0f172a; font-family: monospace;">#{{ quote.id }}</td>
+                        <td style="padding: 1rem;">
+                            <strong>{{ quote.product.name|default:quote.size }}</strong>
+                            <div style="font-size: 0.78rem; color: #64748b;">Capacity: {{ quote.size }}</div>
+                        </td>
+                        <td style="padding: 1rem; font-weight: 600;">{{ quote.quantity }} units</td>
+                        <td style="padding: 1rem; font-size: 0.85rem; color: #475569;">
+                            {{ quote.preferred_delivery_timing|default:"Standard" }}
+                        </td>
+                        <td style="padding: 1rem;">
+                            {% if quote.status == 'completed' %}
+                                <span style="background: #dcfce7; color: #15803d; padding: 0.25rem 0.6rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700;">✓ Completed</span>
+                            {% elif quote.status == 'quoted' %}
+                                <span style="background: #e0f2fe; color: #0369a1; padding: 0.25rem 0.6rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700;">Quote Ready</span>
+                            {% elif quote.status == 'contacted' %}
+                                <span style="background: #fef9c3; color: #a16207; padding: 0.25rem 0.6rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700;">In Review</span>
+                            {% else %}
+                                <span style="background: #f1f5f9; color: #475569; padding: 0.25rem 0.6rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700;">Pending</span>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 1rem;">
+                            {% with reply=quote.replies.first %}
+                                {% if reply and reply.price_per_unit %}
+                                    <div style="color: #047857; font-weight: 700;">₹{{ reply.price_per_unit }}/unit</div>
+                                    <div style="font-size: 0.78rem; color: #64748b;">Est. Total: ₹{{ reply.total_price|floatformat:2 }}</div>
+                                {% else %}
+                                    <span style="color: #94a3b8; font-size: 0.85rem;">Awaiting estimate</span>
+                                {% endif %}
+                            {% endwith %}
+                        </td>
+                        <td style="padding: 1rem;">
+                            {% with payment=quote.payments.first %}
+                                {% if payment and payment.status == 'success' %}
+                                    <span style="color: #16a34a; font-weight: 700; font-size: 0.82rem;">✓ Paid Online</span>
+                                {% elif quote.status == 'quoted' %}
+                                    <span style="color: #ea580c; font-weight: 600; font-size: 0.82rem;">Payment Due</span>
+                                {% else %}
+                                    <span style="color: #94a3b8; font-size: 0.82rem;">—</span>
+                                {% endif %}
+                            {% endwith %}
+                        </td>
+                        <td style="padding: 1rem; text-align: right;">
+                            <div style="display: flex; gap: 0.5rem; justify-content: flex-end; align-items: center;">
+                                {% if quote.verification_token %}
+                                    <a href="{% url 'view_quote_status' quote.verification_token.token %}" style="font-size: 0.85rem; font-weight: 600; color: #0284c7; text-decoration: none;">View &amp; Track →</a>
+                                {% endif %}
+                                {% if quote.status == 'quoted' and quote.replies.first.price_per_unit and quote.verification_token %}
+                                    {% if not quote.payments.first or quote.payments.first.status != 'success' %}
+                                        <a href="{% url 'process_quote_payment' quote.verification_token.token %}" class="button" style="padding: 0.35rem 0.75rem; font-size: 0.78rem; border-radius: 0.5rem;">Pay Online</a>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="card" style="padding: 2.5rem; text-align: center; border-radius: 1rem; border: 1px dashed #cbd5e1; background: #f8fafc;">
+            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📋</div>
+            <h3 style="margin-top: 0; margin-bottom: 0.5rem;">No Wholesale Quotes Yet</h3>
+            <p style="color: #64748b; max-width: 450px; margin: 0 auto 1.5rem;">
+                Submit your first bulk quote request or chat with DispatchAI to get tailored volume pricing for your distribution business.
+            </p>
+            <a href="{% url 'order_request' %}" class="button">Submit Bulk Quote Request</a>
+        </div>
+    {% endif %}
+
+    {# ── Orders Section (if any wholesale orders) ── #}
+    {% if b2b_orders %}
+        <h2 style="margin-top: 2.5rem; margin-bottom: 1rem; font-size: 1.35rem;">Wholesale Orders ({{ b2b_orders_count }})</h2>
+        <div class="table-responsive" style="background: white; border-radius: 1rem; border: 1px solid #e2e8f0; overflow: hidden;">
+            <table class="table" style="width: 100%; border-collapse: collapse; text-align: left;">
+                <thead style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                    <tr>
+                        <th style="padding: 0.85rem 1rem; font-size: 0.8rem; text-transform: uppercase; color: #64748b;">Order #</th>
+                        <th style="padding: 0.85rem 1rem; font-size: 0.8rem; text-transform: uppercase; color: #64748b;">Date</th>
+                        <th style="padding: 0.85rem 1rem; font-size: 0.8rem; text-transform: uppercase; color: #64748b;">Total Amount</th>
+                        <th style="padding: 0.85rem 1rem; font-size: 0.8rem; text-transform: uppercase; color: #64748b;">Status</th>
+                        <th style="padding: 0.85rem 1rem; font-size: 0.8rem; text-transform: uppercase; color: #64748b; text-align: right;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in b2b_orders %}
+                    <tr style="border-top: 1px solid #f1f5f9;">
+                        <td style="padding: 1rem; font-weight: 700;">{{ order.order_number }}</td>
+                        <td style="padding: 1rem; color: #64748b;">{{ order.created_at|date:"M d, Y" }}</td>
+                        <td style="padding: 1rem; font-weight: 700;">₹{{ order.total_amount }}</td>
+                        <td style="padding: 1rem;">
+                            <span style="background: #f0fdf4; color: #166534; padding: 0.25rem 0.6rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700;">{{ order.get_status_display }}</span>
+                        </td>
+                        <td style="padding: 1rem; text-align: right;">
+                            <a href="{% url 'order_track' order.order_number %}" style="color: #0284c7; font-weight: 600; text-decoration: none;">Track Order →</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+</section>
+
+{# ── DispatchAI Chat Widget ── #}
+{% include "app/dispatch_widget.html" %}
+
+{% endblock %}

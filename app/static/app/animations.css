@@ -1,0 +1,405 @@
+/* 3D Animations and Transforms */
+
+/* Enable 3D perspective for entire page */
+html {
+  perspective: 1200px;
+}
+
+/* Rotating bottle animation */
+@keyframes rotateBottle {
+  from {
+    transform: rotateY(0deg) rotateX(0deg);
+  }
+  to {
+    transform: rotateY(360deg) rotateX(15deg);
+  }
+}
+
+/* Floating animation */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+/* Scale pulse animation */
+@keyframes scalePulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* Shimmer effect */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+/* Glow effect */
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(37, 99, 235, 0.3), 0 0 10px rgba(59, 130, 246, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(37, 99, 235, 0.6), 0 0 30px rgba(59, 130, 246, 0.4);
+  }
+}
+
+/* Slide in from left */
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-100px) rotateY(20deg);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) rotateY(0deg);
+  }
+}
+
+/* Slide in from right */
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(100px) rotateY(-20deg);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) rotateY(0deg);
+  }
+}
+
+/* Bounce animation */
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  25% {
+    transform: translateY(-10px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+  75% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Flip animation */
+@keyframes flip3D {
+  from {
+    transform: rotateX(0deg) rotateY(0deg);
+  }
+  to {
+    transform: rotateX(360deg) rotateY(360deg);
+  }
+}
+
+/* Parallax tilt effect on hover */
+@keyframes tilt {
+  0%, 100% {
+    transform: perspective(1000px) rotateX(0deg) rotateY(0deg);
+  }
+  50% {
+    transform: perspective(1000px) rotateX(5deg) rotateY(5deg);
+  }
+}
+
+/* Apply animations to product cards */
+.product-card {
+  animation: slideInLeft 0.6s ease-out forwards;
+  transition: all 0.3s ease;
+  transform-style: preserve-3d;
+  cursor: pointer;
+}
+
+.product-card:nth-child(2n) {
+  animation: slideInRight 0.6s ease-out forwards;
+}
+
+.product-card:hover {
+  animation: scalePulse 0.6s ease-in-out infinite, glow 2s ease-in-out infinite;
+  transform: translateY(-10px) perspective(1000px) rotateX(5deg);
+  box-shadow: 0 20px 40px rgba(37, 99, 235, 0.3);
+}
+
+.product-card-image {
+  transition: all 0.4s ease;
+  transform-style: preserve-3d;
+}
+
+.product-card:hover .product-card-image {
+  animation: rotateBottle 3s linear infinite;
+  transform: rotateY(5deg) rotateX(-5deg);
+  filter: brightness(1.1);
+}
+
+/* Apply to section headers */
+.section-header h1 {
+  animation: slideInLeft 0.8s ease-out;
+}
+
+.section-header p {
+  animation: slideInRight 0.8s ease-out;
+}
+
+/* Apply to buttons */
+.button {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  transform-style: preserve-3d;
+}
+
+.button:hover {
+  transform: perspective(1000px) rotateY(5deg) translateZ(10px);
+  box-shadow: 0 10px 30px rgba(29, 78, 216, 0.4);
+}
+
+.button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transform: translateX(-100%);
+  animation: shimmer 3s infinite;
+}
+
+/* Apply to hero content */
+.hero-copy {
+  animation: slideInLeft 0.8s ease-out;
+}
+
+.hero-stat-grid div {
+  animation: float 3s ease-in-out infinite;
+  transition: all 0.3s ease;
+}
+
+.hero-stat-grid div:hover {
+  animation: float 3s ease-in-out infinite, glow 2s ease-in-out infinite;
+  transform: perspective(1000px) rotateX(-10deg) rotateZ(5deg);
+}
+
+/* Apply to testimonial cards */
+.testimonial-card {
+  animation: slideInLeft 0.6s ease-out forwards;
+  transition: all 0.3s ease;
+  transform-style: preserve-3d;
+}
+
+.testimonial-card:nth-child(2n) {
+  animation: slideInRight 0.6s ease-out forwards;
+}
+
+.testimonial-card:hover {
+  transform: perspective(1000px) rotateX(-5deg) rotateY(5deg) translateZ(20px);
+  box-shadow: 0 15px 35px rgba(37, 99, 235, 0.25);
+}
+
+/* About cards animation */
+.about-card {
+  animation: slideInLeft 0.6s ease-out forwards;
+  transition: all 0.3s ease;
+  transform-style: preserve-3d;
+}
+
+.about-card:nth-child(2n) {
+  animation: slideInRight 0.6s ease-out forwards;
+}
+
+.about-card:hover {
+  transform: perspective(1000px) rotateX(5deg) rotateY(-5deg) translateY(-10px);
+  box-shadow: 0 20px 40px rgba(37, 99, 235, 0.2);
+}
+
+/* Highlight cards */
+.highlight-card {
+  animation: slideInLeft 0.6s ease-out forwards;
+  transition: all 0.3s ease;
+}
+
+.highlight-card:nth-child(2) {
+  animation: float 3s ease-in-out infinite;
+  animation-delay: 0.2s;
+}
+
+.highlight-card:nth-child(3) {
+  animation: slideInRight 0.6s ease-out forwards;
+  animation-delay: 0.3s;
+}
+
+.highlight-card:hover {
+  animation: scalePulse 0.6s ease-in-out infinite;
+  transform: perspective(1000px) rotateX(-10deg) translateY(-15px);
+  box-shadow: 0 25px 50px rgba(59, 130, 246, 0.3);
+}
+
+/* Hero bottle animation */
+.hero-bottle {
+  animation: rotateBottle 4s linear infinite;
+}
+
+/* Manufacturing section */
+.manufacturing-step {
+  animation: slideInLeft 0.6s ease-out forwards;
+  transition: all 0.3s ease;
+  transform-style: preserve-3d;
+}
+
+.manufacturing-step:nth-child(2) {
+  animation: float 4s ease-in-out infinite;
+  animation-delay: 0.2s;
+}
+
+.manufacturing-step:nth-child(3) {
+  animation: slideInRight 0.6s ease-out forwards;
+  animation-delay: 0.3s;
+}
+
+.manufacturing-step:hover {
+  transform: perspective(1000px) rotateX(-5deg) rotateY(10deg) translateZ(15px);
+  box-shadow: 0 15px 35px rgba(37, 99, 235, 0.25);
+}
+
+/* Navigation hover effects */
+.site-nav a {
+  position: relative;
+  transition: all 0.3s ease;
+  transform-style: preserve-3d;
+}
+
+.site-nav a::before {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: #2563eb;
+  transition: width 0.3s ease;
+}
+
+.site-nav a:hover {
+  transform: perspective(600px) rotateY(-5deg) translateY(-2px);
+}
+
+.site-nav a:hover::before {
+  width: 100%;
+}
+
+/* Bottle logo animation */
+.bottle-logo {
+  transition: all 0.3s ease;
+  animation: rotateBottle 3s linear infinite;
+  transform-style: preserve-3d;
+}
+
+.site-branding a:hover .bottle-logo {
+  animation: rotateBottle 1s linear infinite;
+  filter: drop-shadow(0 0 8px rgba(37, 99, 235, 0.6));
+}
+
+/* Contact form animations */
+.contact-form {
+  animation: slideInLeft 0.8s ease-out;
+}
+
+.contact-form input,
+.contact-form textarea {
+  transition: all 0.3s ease;
+  transform-style: preserve-3d;
+}
+
+.contact-form input:focus,
+.contact-form textarea:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1), 0 0 20px rgba(37, 99, 235, 0.3);
+  transform: perspective(1000px) scale(1.02);
+}
+
+/* Stat cards */
+.stat-card {
+  animation: slideInLeft 0.6s ease-out forwards;
+  transition: all 0.3s ease;
+  transform-style: preserve-3d;
+}
+
+.stat-card:nth-child(2n) {
+  animation: slideInRight 0.6s ease-out forwards;
+}
+
+.stat-card:hover {
+  transform: perspective(1000px) rotateX(-10deg) rotateY(5deg) translateZ(15px);
+  box-shadow: 0 20px 40px rgba(37, 99, 235, 0.25);
+}
+
+/* Category cards */
+.category-card {
+  animation: slideInLeft 0.6s ease-out forwards;
+  transition: all 0.3s ease;
+  transform-style: preserve-3d;
+}
+
+.category-card:nth-child(2n) {
+  animation: slideInRight 0.6s ease-out forwards;
+}
+
+.category-card:hover {
+  transform: perspective(1000px) rotateX(5deg) rotateY(-10deg) translateY(-10px);
+  box-shadow: 0 25px 50px rgba(59, 130, 246, 0.3);
+}
+
+/* Section fade-in */
+.section {
+  animation: slideInLeft 0.8s ease-out;
+  transform-style: preserve-3d;
+}
+
+/* Scroll animations */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Responsive adjustments for 3D effects */
+@media (max-width: 768px) {
+  .product-card:hover {
+    animation: scalePulse 0.6s ease-in-out infinite;
+    transform: translateY(-5px);
+  }
+
+  .hero-stat-grid div:hover {
+    animation: float 3s ease-in-out infinite;
+    transform: scale(1.02);
+  }
+
+  .button:hover {
+    transform: scale(1.02);
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .highlight-card {
+    background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+    border-color: rgba(37, 99, 235, 0.3);
+  }
+
+  .product-card,
+  .about-card {
+    background: #1f2937;
+    border-color: rgba(37, 99, 235, 0.2);
+  }
+}

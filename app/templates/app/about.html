@@ -1,0 +1,85 @@
+{% extends 'app/base.html' %}
+{% load static %}
+
+{% block title %}About Our Process - Cheers the Pure Water{% endblock %}
+
+{% block content %}
+<section class="section about-hero" style="max-width: 1000px; margin: 2rem auto; padding: 2.5rem; background: var(--glass-bg); backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow); border-radius: var(--radius-lg);">
+    <div style="text-align: center; margin-bottom: 2.5rem;">
+        <h1 style="font-size: 2.5rem; font-weight: 800; margin: 0 0 0.5rem;
+                    background: linear-gradient(135deg, #0c1a40, #0ea5e9);
+                    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+            Crafting Purity
+        </h1>
+        <p style="color: #475569; max-width: 600px; margin: 0 auto; font-size: 1.05rem; opacity: 0.9; font-weight: 500;">
+            See how we process and sanitize every single drop into our sustainable premium hydration bottles.
+        </p>
+    </div>
+
+    <!-- Frosted Neon-tinted Crystal Glass Border Container with Hover Micro-interactions -->
+    <div class="neon-video-container" style="
+        position: relative;
+        border-radius: var(--radius-lg, 1.25rem);
+        padding: 6px;
+        background: linear-gradient(135deg, rgba(14, 165, 233, 0.4), rgba(79, 70, 229, 0.4));
+        box-shadow: 0 0 25px rgba(14, 165, 233, 0.25), inset 0 0 15px rgba(255, 255, 255, 0.1);
+        transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.4s ease;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+    ">
+        <div style="
+            border-radius: calc(var(--radius-lg, 1.25rem) - 4px);
+            overflow: hidden;
+            background: rgba(15, 23, 42, 0.6);
+            display: flex;
+        ">
+            <video id="mfgVideo" autoplay loop muted playsinline 
+                   controlsList="nodownload nopictureinpicture" 
+                   disablePictureInPicture 
+                   style="width: 100%; height: auto; object-fit: cover; aspect-ratio: 16/9; display: block;">
+                <source src="{% static 'app/media/manufacturing.mp4' %}" type="video/mp4">
+                <!-- Fallback Image if video fails -->
+                <img src="{% static 'app/media/manufacturing.jpeg' %}" alt="Process Placeholder" style="width: 100%; height: auto;" />
+            </video>
+        </div>
+    </div>
+
+    <div style="margin-top: 3rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
+        <div class="about-card" style="background: rgba(255, 255, 255, 0.25); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: var(--radius-md); padding: 1.5rem; text-align: left; color: #0c1a40;">
+            <h2 style="font-size: 1.25rem; font-weight: 700; margin-top: 0; color: #0ea5e9;">Our Mission</h2>
+            <p style="color: #334155; font-size: 0.92rem; line-height: 1.6; margin-bottom: 0;">To deliver premium water bottles that keep your brand hydrated, supported by modern manufacturing and eco-friendly practices.</p>
+        </div>
+        <div class="about-card" style="background: rgba(255, 255, 255, 0.25); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: var(--radius-md); padding: 1.5rem; text-align: left; color: #0c1a40;">
+            <h2 style="font-size: 1.25rem; font-weight: 700; margin-top: 0; color: #0ea5e9;">Trusted Manufacturing</h2>
+            <p style="color: #334155; font-size: 0.92rem; line-height: 1.6; margin-bottom: 0;">Our production line is optimized for speed, consistency, and material efficiency so you get high-volume orders on time.</p>
+        </div>
+        <div class="about-card" style="background: rgba(255, 255, 255, 0.25); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: var(--radius-md); padding: 1.5rem; text-align: left; color: #0c1a40;">
+            <h2 style="font-size: 1.25rem; font-weight: 700; margin-top: 0; color: #0ea5e9;">Customer-first</h2>
+            <p style="color: #334155; font-size: 0.92rem; line-height: 1.6; margin-bottom: 0;">We work closely with clients on product specs, packaging options, and sustainable packaging solutions.</p>
+        </div>
+    </div>
+</section>
+
+<!-- Hover Micro-interactions CSS & Anti-Interference Script -->
+<style>
+    .neon-video-container:hover {
+        transform: scale(1.025);
+        box-shadow: 0 0 35px rgba(14, 165, 233, 0.45), 0 0 15px rgba(79, 70, 229, 0.35);
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const video = document.getElementById('mfgVideo');
+        if (video) {
+            // Prevent mouse right-clicks to disable generic context boxes completely
+            video.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+            });
+
+            // Ensure picture-in-picture remains disabled
+            video.disablePictureInPicture = true;
+        }
+    });
+</script>
+{% endblock %}

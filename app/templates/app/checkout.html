@@ -1,0 +1,287 @@
+{% extends 'app/base.html' %}
+
+{% block title %}Checkout - Cheers the Pure Water{% endblock %}
+
+{% block content %}
+<section class="section animate-fade-up">
+    <div class="section-header text-center mb-5 animate-fade-up">
+        <h1 class="display-4 fw-bold">Secure Checkout</h1>
+        <p class="text-muted">Complete your order — fast, safe, and transparent</p>
+    </div>
+
+    <div class="row gap-4 justify-content-center">
+        <!-- ── Shipping Form ── -->
+        <div class="col-lg-7 animate-fade-up animate-fade-up-delay-1">
+            <div class="glass-card p-5 h-100">
+                <h4 class="mb-4 fw-bold"><i class="fas fa-truck me-2 text-primary"></i> Shipping Information</h4>
+                <form method="post" id="checkout-form">
+                    {% csrf_token %}
+
+                    <!-- Hidden fields populated by JS -->
+                    <input type="hidden" name="delivery_fee" id="hidden-delivery-fee" value="0" />
+                    <input type="hidden" name="delivery_distance_km" id="hidden-distance" value="" />
+                    <input type="hidden" name="payment_method" id="hidden-payment-method" value="online" />
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small fw-bold text-uppercase">Full Name</label>
+                            <input type="text" name="name" class="form-control bg-white bg-opacity-75 border-0" style="border-radius:var(--radius-sm);padding:0.75rem;" value="{{ user.get_full_name|default:user.username }}" required />
+                        </div>
+                        <div class="col-md-6 mt-3 mt-md-0">
+                            <label class="form-label text-muted small fw-bold text-uppercase">Phone Number</label>
+                            <input type="tel" name="phone" class="form-control bg-white bg-opacity-75 border-0" style="border-radius:var(--radius-sm);padding:0.75rem;" required placeholder="+91 XXXXX XXXXX" />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold text-uppercase">Email Address</label>
+                        <input type="email" name="email" class="form-control bg-white bg-opacity-75 border-0" style="border-radius:var(--radius-sm);padding:0.75rem;" value="{{ user.email }}" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold text-uppercase">Delivery Address</label>
+                        <textarea name="address" id="shipping-address" class="form-control bg-white bg-opacity-75 border-0" rows="3" style="border-radius:var(--radius-sm);padding:0.75rem;" required placeholder="Street address, apartment, suite, etc."></textarea>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <label class="form-label text-muted small fw-bold text-uppercase">City</label>
+                            <input type="text" name="city" id="shipping-city" class="form-control bg-white bg-opacity-75 border-0" style="border-radius:var(--radius-sm);padding:0.75rem;" required />
+                        </div>
+                        <div class="col-md-4 mt-3 mt-md-0">
+                            <label class="form-label text-muted small fw-bold text-uppercase">State</label>
+                            <input type="text" name="state" class="form-control bg-white bg-opacity-75 border-0" style="border-radius:var(--radius-sm);padding:0.75rem;" required />
+                        </div>
+                        <div class="col-md-4 mt-3 mt-md-0">
+                            <label class="form-label text-muted small fw-bold text-uppercase">Postal Code</label>
+                            <input type="text" name="postal_code" class="form-control bg-white bg-opacity-75 border-0" style="border-radius:var(--radius-sm);padding:0.75rem;" required />
+                        </div>
+                    </div>
+
+                    <!-- ── Live Delivery Fee Banner ── -->
+                    <div id="delivery-fee-banner" class="mb-4" style="display:none;">
+                        <div class="d-flex align-items-center gap-2 p-3 rounded" style="background:rgba(14,165,233,0.1); border:1px solid rgba(14,165,233,0.3); border-radius:var(--radius-sm);">
+                            <i class="fas fa-map-marker-alt text-primary"></i>
+                            <div>
+                                <strong class="text-primary" id="fee-label">Calculating...</strong>
+                                <small class="text-muted d-block" id="fee-tier"></small>
+                            </div>
+                            <div class="ms-auto fw-bold text-primary" id="fee-amount"></div>
+                        </div>
+                    </div>
+
+                    <!-- ── Payment Method Selector ── -->
+                    <h5 class="fw-bold mb-3 mt-2"><i class="fas fa-wallet me-2 text-primary"></i> Payment Method</h5>
+
+                    <div class="d-flex gap-3 mb-4 flex-wrap" id="payment-method-selector">
+                        <!-- Online Full Payment -->
+                        <label class="flex-grow-1" style="cursor:pointer;">
+                            <input type="radio" name="payment_method_ui" value="online" checked class="d-none" id="opt-online" />
+                            <div class="payment-option fancy-box p-3 text-center rounded selected" id="card-online" style="border-radius:var(--radius-md); border:2px solid transparent; transition: all 0.3s;">
+                                <i class="fas fa-credit-card fa-2x text-primary mb-2"></i>
+                                <div class="fw-bold">Pay Online</div>
+                                <small class="text-muted">Full amount now</small>
+                            </div>
+                        </label>
+                        <!-- COD -->
+                        <label class="flex-grow-1" style="cursor:pointer;">
+                            <input type="radio" name="payment_method_ui" value="cod" class="d-none" id="opt-cod" />
+                            <div class="payment-option fancy-box p-3 text-center rounded" id="card-cod" style="border-radius:var(--radius-md); border:2px solid transparent; transition: all 0.3s;">
+                                <i class="fas fa-hand-holding-usd fa-2x text-success mb-2"></i>
+                                <div class="fw-bold">Cash on Delivery</div>
+                                <small class="text-muted">30% advance online</small>
+                            </div>
+                        </label>
+                    </div>
+
+                    <!-- COD Warning (shown when COD selected) -->
+                    <div id="cod-warning" style="display:none;" class="mb-4">
+                        <div class="p-3 rounded" style="background:rgba(234,179,8,0.12);border:1px solid rgba(234,179,8,0.4);border-radius:var(--radius-sm);">
+                            <strong style="color:#b45309;"><i class="fas fa-exclamation-triangle me-1"></i> COD Policy</strong>
+                            <p class="mb-1 mt-1 small" style="color:#92400e;">
+                                A <strong>30% non-refundable advance</strong> must be paid online now via secure Stripe or mock gateway. The remaining <strong>70% balance</strong> is collected at the time of delivery.
+                            </p>
+                            <div id="cod-split-info" class="mt-2 small fw-bold" style="color:#78350f;"></div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-3 mt-4">
+                        <a href="{% url 'view_cart' %}" class="btn btn-light px-4 py-3 border text-muted" style="border-radius:var(--radius-xl);">
+                            <i class="fas fa-arrow-left me-1"></i> Back
+                        </a>
+                        <button type="submit" id="submit-btn" class="btn btn-primary flex-grow-1 py-3 fw-bold shadow-sm" style="border-radius:var(--radius-xl);background:linear-gradient(135deg,var(--wave-aqua),var(--indigo));border:none;font-size:1rem;">
+                            <i class="fas fa-shield-alt me-2"></i> <span id="submit-label">Proceed to Payment</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- ── Order Summary ── -->
+        <div class="col-lg-4 animate-fade-up animate-fade-up-delay-2">
+            <div class="glass-card fancy-box p-4 position-sticky" style="top:100px;">
+                <h4 class="mb-4">Order Summary</h4>
+
+                <div class="d-flex flex-column gap-3 mb-4">
+                    {% for item in cart_items %}
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="bg-primary bg-opacity-10 rounded-circle text-primary d-flex align-items-center justify-content-center" style="width:32px;height:32px;">
+                                <small class="fw-bold">{{ item.quantity }}</small>
+                            </div>
+                            <div>
+                                <small class="fw-bold d-block">{{ item.product.name }}</small>
+                                <small class="text-muted" style="font-size:0.75rem;">{{ item.product.capacity }}</small>
+                            </div>
+                        </div>
+                        <small class="fw-bold text-success">₹{{ item.get_total_price }}</small>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <hr class="my-3" />
+
+                <div class="d-flex justify-content-between mb-2 text-muted small">
+                    <span>Subtotal</span>
+                    <span id="summary-subtotal">₹{{ total_price }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2 text-muted small" id="delivery-row" style="display:none !important;">
+                    <span>Delivery Fee <small id="summary-distance"></small></span>
+                    <span id="summary-delivery-fee">₹0</span>
+                </div>
+
+                <hr class="my-3" />
+
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="fs-5 fw-bold">Total</span>
+                    <span class="fs-5 fw-bold text-primary" id="summary-total">₹{{ total_price }}</span>
+                </div>
+
+                <!-- COD Split Preview -->
+                <div id="cod-summary" style="display:none;" class="mt-3 p-3 rounded" style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:var(--radius-sm);">
+                    <div class="d-flex justify-content-between small mb-1">
+                        <span class="text-muted">30% Advance (Pay Now)</span>
+                        <span class="fw-bold text-success" id="cod-advance">—</span>
+                    </div>
+                    <div class="d-flex justify-content-between small">
+                        <span class="text-muted">70% Balance (At Delivery)</span>
+                        <span class="fw-bold text-warning" id="cod-balance">—</span>
+                    </div>
+                </div>
+
+                <!-- Trust badges -->
+                <div class="mt-4 pt-3 border-top text-center">
+                    <div class="d-flex justify-content-center gap-3 text-muted">
+                        <i class="fas fa-lock" title="Secure SSL"></i>
+                        <i class="fab fa-cc-stripe" title="Stripe Secure"></i>
+                        <i class="fab fa-cc-visa" title="Visa"></i>
+                        <i class="fab fa-cc-mastercard" title="Mastercard"></i>
+                    </div>
+                    <small class="text-muted d-block mt-2" style="font-size:0.7rem;">Your data is securely encrypted.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+.payment-option.selected {
+    border-color: var(--accent) !important;
+    background: rgba(14,165,233,0.08) !important;
+    box-shadow: 0 0 0 3px rgba(14,165,233,0.15) !important;
+}
+</style>
+
+<script>
+const SUBTOTAL = parseFloat("{{ total_price }}") || 0;
+let currentDeliveryFee = 0;
+let currentDistanceKm = null;
+
+// ── Payment Method Toggle ──────────────────────────────────────────
+document.querySelectorAll('input[name="payment_method_ui"]').forEach(radio => {
+    radio.addEventListener('change', function () {
+        document.querySelectorAll('.payment-option').forEach(el => el.classList.remove('selected'));
+        document.getElementById('card-' + this.value).classList.add('selected');
+        document.getElementById('hidden-payment-method').value = this.value;
+
+        const isCod = this.value === 'cod';
+        document.getElementById('cod-warning').style.display = isCod ? 'block' : 'none';
+        document.getElementById('cod-summary').style.display = isCod ? 'block' : 'none';
+        document.getElementById('submit-label').textContent = isCod
+            ? 'Pay 30% Advance Now'
+            : 'Proceed to Payment';
+        updateSummary();
+    });
+});
+
+// ── Delivery Fee Live Calculator ───────────────────────────────────
+let feeDebounce = null;
+function triggerDeliveryLookup() {
+    const address = document.getElementById('shipping-address').value.trim();
+    const city = document.getElementById('shipping-city').value.trim();
+    if (!address || !city) return;
+
+    clearTimeout(feeDebounce);
+    feeDebounce = setTimeout(() => {
+        const fullAddress = `${address}, ${city}`;
+        document.getElementById('delivery-fee-banner').style.display = 'block';
+        document.getElementById('fee-label').textContent = 'Calculating delivery fee...';
+        document.getElementById('fee-tier').textContent = '';
+        document.getElementById('fee-amount').textContent = '';
+
+        const csrf = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        fetch('/api/delivery-fee/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
+            body: JSON.stringify({ address: fullAddress })
+        })
+        .then(r => r.json())
+        .then(data => {
+            currentDeliveryFee = data.delivery_fee || 0;
+            currentDistanceKm  = data.distance_km || null;
+
+            document.getElementById('hidden-delivery-fee').value = currentDeliveryFee;
+            document.getElementById('hidden-distance').value = currentDistanceKm || '';
+
+            if (data.tier === 'unavailable' || data.tier === 'address_not_found') {
+                document.getElementById('fee-label').textContent = 'Could not detect address';
+                document.getElementById('fee-tier').textContent = 'Delivery fee will be calculated at dispatch';
+                document.getElementById('fee-amount').textContent = '₹0';
+            } else {
+                const dist = currentDistanceKm ? `${currentDistanceKm} km away` : '';
+                document.getElementById('fee-label').textContent = `Delivery: ${dist}`;
+                document.getElementById('fee-tier').textContent = data.tier;
+                document.getElementById('fee-amount').textContent = currentDeliveryFee === 0 ? '🎉 FREE' : `₹${currentDeliveryFee}`;
+                // Show delivery row in summary
+                document.getElementById('delivery-row').style.display = 'flex';
+                document.getElementById('summary-distance').textContent = currentDistanceKm ? `(${currentDistanceKm} km)` : '';
+                document.getElementById('summary-delivery-fee').textContent = currentDeliveryFee === 0 ? '₹0 (Free)' : `₹${currentDeliveryFee}`;
+            }
+            updateSummary();
+        })
+        .catch(() => {
+            document.getElementById('fee-label').textContent = 'Delivery fee lookup unavailable';
+        });
+    }, 900);
+}
+
+document.getElementById('shipping-address').addEventListener('input', triggerDeliveryLookup);
+document.getElementById('shipping-city').addEventListener('input', triggerDeliveryLookup);
+
+// ── Update summary totals & COD split ─────────────────────────────
+function updateSummary() {
+    const grandTotal = SUBTOTAL + currentDeliveryFee;
+    document.getElementById('summary-total').textContent = `₹${grandTotal.toFixed(2)}`;
+
+    const isCod = document.querySelector('input[name="payment_method_ui"]:checked')?.value === 'cod';
+    if (isCod) {
+        const adv = (grandTotal * 0.30).toFixed(2);
+        const bal = (grandTotal * 0.70).toFixed(2);
+        document.getElementById('cod-advance').textContent = `₹${adv}`;
+        document.getElementById('cod-balance').textContent = `₹${bal}`;
+        document.getElementById('cod-split-info').textContent =
+            `Pay ₹${adv} online now · ₹${bal} at delivery`;
+    }
+}
+</script>
+{% endblock %}

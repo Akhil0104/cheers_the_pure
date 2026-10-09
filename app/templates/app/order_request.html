@@ -1,0 +1,81 @@
+{% extends 'app/base.html' %}
+
+{% block title %}Request a Quote - CheersThePure{% endblock %}
+
+{% block content %}
+<section class="section auth-section centered-form">
+    <div class="section-header center-text">
+        {% if product %}
+            <h1>Request a Quote for {{ product.name }}</h1>
+            <p>Complete the form and our sales team will send you a price estimate.</p>
+        {% else %}
+            <h1>Request a Quote</h1>
+            <p>Tell us what you need and we will provide a custom order estimate.</p>
+        {% endif %}
+    </div>
+
+    {% if success %}
+        <div class="alert alert-success" style="padding: 1.25rem; border-radius: 0.75rem; background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; margin-bottom: 1.5rem;">
+            <h3 style="margin-top: 0; margin-bottom: 0.5rem;">✓ Quote Request Submitted! (Ref #{{ created_quote.id }})</h3>
+            <p style="margin-bottom: 0.75rem;">Our wholesale distribution team has received your inquiry for <strong>{{ created_quote.quantity }} units</strong> of <strong>{{ created_quote.product.name|default:created_quote.size }}</strong>.</p>
+            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                {% if created_quote.verification_token %}
+                    <a href="{% url 'view_quote_status' created_quote.verification_token.token %}" class="button" style="display: inline-block;">Track Quote Status</a>
+                {% endif %}
+                <a href="{% url 'dashboard' %}" class="button button-secondary" style="display: inline-block;">Go to B2B Dashboard</a>
+            </div>
+        </div>
+    {% endif %}
+
+    <form method="post" class="auth-form">
+        {% csrf_token %}
+        <label>
+            Name
+            <input type="text" name="name" value="{{ prefilled_name }}" required />
+        </label>
+        <label>
+            Email
+            <input type="email" name="email" value="{{ prefilled_email }}" required />
+        </label>
+        <label>
+            Company
+            <input type="text" name="company" value="{{ prefilled_company }}" placeholder="e.g. Apex Beverage Distributors" />
+        </label>
+        <label>
+            Bottle size
+            <select name="size" required>
+                <option value="">Select size</option>
+                {% for value, label in size_options %}
+                    <option value="{{ value }}" {% if value == selected_size %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>
+            Quantity (Units / Trays)
+            <input type="number" name="quantity" min="1" value="100" placeholder="e.g. 500" required />
+        </label>
+        <label>
+            Preferred Delivery Timing
+            <select name="preferred_delivery_timing">
+                <option value="Standard (3-5 business days)">Standard (3-5 business days)</option>
+                <option value="Urgent Supply (Within 48 hours)">Urgent Supply (Within 48 hours)</option>
+                <option value="Weekly Recurring Distribution">Weekly Recurring Distribution</option>
+                <option value="Monthly Bulk Delivery">Monthly Bulk Delivery</option>
+                <option value="Scheduled Specific Date">Scheduled Specific Date (specify below)</option>
+            </select>
+        </label>
+        <label>
+            Wholesale Delivery Address
+            <input type="text" name="delivery_address" value="{{ prefilled_address }}" placeholder="Warehouse / Business delivery address & city" />
+        </label>
+        {% if product %}
+            <p class="product-meta">Selected SKU: <strong>{{ product.name }}</strong> — {{ product.capacity }}</p>
+        {% endif %}
+        <label>
+            Order details & special instructions
+            <textarea name="details" rows="4" placeholder="Tell us about custom labeling, pallet packaging, timing constraints, or target unit pricing."></textarea>
+        </label>
+        <button type="submit" class="button">Submit Wholesale Quote Request</button>
+    </form>
+</section>
+{% endblock %}

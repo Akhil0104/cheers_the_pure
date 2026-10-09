@@ -1,0 +1,574 @@
+{% extends 'app/base.html' %}
+{% load static %}
+
+{% block title %}Our Products — Cheers the Pure Water{% endblock %}
+{% block meta_description %}Explore our full lineup of premium sustainable water bottles. Available for retail and corporate bulk orders.{% endblock %}
+
+{% block extra_head %}
+<!-- Tailwind CSS (scoped to this page only) -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    corePlugins: { preflight: false },  /* don't reset globals already set by site.css */
+    prefix: 'tw-',
+  }
+</script>
+<style>
+  /* ── Product Catalog overrides ── */
+  #products-catalog .prod-card {
+    background: rgba(255, 255, 255, 0.45);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.09);
+    border-radius: 1.5rem;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.2, 1),
+                box-shadow 0.3s ease,
+                opacity 0.4s ease;
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  #products-catalog .prod-card.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  #products-catalog .prod-card:hover {
+    transform: translateY(-6px) scale(1.015);
+    box-shadow: 0 24px 60px rgba(14, 165, 233, 0.28),
+                0 0 0 1px rgba(14, 165, 233, 0.15);
+  }
+
+  .btn-add-cart {
+    background: linear-gradient(135deg, #0ea5e9, #4f46e5);
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    padding: 0.7rem 1.4rem;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+    box-shadow: 0 4px 18px rgba(14, 165, 233, 0.35);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .btn-add-cart:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(14, 165, 233, 0.48);
+    filter: brightness(1.06);
+  }
+  .btn-add-cart:active { transform: translateY(0); }
+
+  .btn-quote {
+    background: linear-gradient(135deg, #0f172a, #1e40af);
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    padding: 0.7rem 1.4rem;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 4px 18px rgba(15, 23, 42, 0.3);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .btn-quote:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(15, 23, 42, 0.45);
+  }
+
+  /* ── B2B Price Hidden Badge ── */
+  .price-hidden-badge {
+    display: inline-block;
+    background: rgba(15, 23, 42, 0.08);
+    color: #475569;
+    font-size: 0.8rem;
+    padding: 0.2rem 0.7rem;
+    border-radius: 999px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    border: 1px solid rgba(15,23,42,0.1);
+  }
+
+  /* ── B2B Quote Modal ── */
+  #quoteModal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+  #quoteModal.open { display: flex; }
+
+  #quoteModal .modal-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(12, 26, 64, 0.55);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    animation: overlayFadeIn 0.25s ease;
+  }
+
+  @keyframes overlayFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  #quoteModal .modal-box {
+    position: relative;
+    z-index: 10;
+    background: rgba(255, 255, 255, 0.78);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.4);
+    box-shadow: 0 24px 80px rgba(31, 38, 135, 0.18);
+    border-radius: 2rem;
+    padding: 2.5rem;
+    width: 100%;
+    max-width: 540px;
+    animation: modalSlideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  @keyframes modalSlideUp {
+    from { opacity: 0; transform: translateY(30px) scale(0.96); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  #quoteModal .modal-box h2 {
+    font-size: 1.45rem;
+    font-weight: 800;
+    margin: 0 0 0.4rem;
+    background: linear-gradient(135deg, #0c1a40, #0ea5e9);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  #quoteModal .modal-close {
+    position: absolute;
+    top: 1.25rem;
+    right: 1.25rem;
+    background: rgba(0,0,0,0.06);
+    border: none;
+    border-radius: 50%;
+    width: 2rem;
+    height: 2rem;
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+  }
+  #quoteModal .modal-close:hover { background: rgba(0,0,0,0.12); }
+
+  #quoteModal form input,
+  #quoteModal form select,
+  #quoteModal form textarea {
+    background: rgba(255,255,255,0.8);
+    border: 1.5px solid rgba(14,165,233,0.2);
+  }
+
+  #quoteModal .submit-btn {
+    background: linear-gradient(135deg, #0ea5e9, #4f46e5);
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    padding: 0.85rem 2rem;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 0.5rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 6px 22px rgba(14,165,233,0.35);
+  }
+  #quoteModal .submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 32px rgba(14,165,233,0.48);
+  }
+
+  /* ── Filter chips ── */
+  .filter-chips { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+  .chip {
+    padding: 0.45rem 1.1rem;
+    border-radius: 999px;
+    border: 1.5px solid rgba(14, 165, 233, 0.25);
+    background: rgba(255,255,255,0.55);
+    backdrop-filter: blur(6px);
+    color: #475569;
+    font-size: 0.88rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .chip:hover, .chip.active {
+    background: linear-gradient(135deg, #0ea5e9, #4f46e5);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 4px 14px rgba(14,165,233,0.28);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="section">
+  <div class="section-header">
+    <h1>Our Water Bottles</h1>
+    <p>Browse our premium lineup of eco-friendly water bottles — crafted for purity and sustainability.</p>
+  </div>
+
+  <!-- Account type hint (used by JS) -->
+  <span id="account-type-data"
+        data-account-type="{{ account_type|default:'b2c' }}"
+        data-is-authenticated="{{ request.user.is_authenticated|yesno:'true,false' }}"
+        data-is-b2b="{{ is_b2b|yesno:'true,false' }}"
+        style="display:none;"
+        aria-hidden="true">
+  </span>
+
+  <!-- Filter chips -->
+  <div class="filter-chips" id="filter-chips" role="group" aria-label="Filter products by capacity">
+    <button class="chip active" data-filter="all">All</button>
+    <button class="chip" data-filter="250 ml">250 ml</button>
+    <button class="chip" data-filter="500 ml">500 ml</button>
+    <button class="chip" data-filter="1000 ml">1 Ltr</button>
+    <button class="chip" data-filter="2 litres">2 Litres</button>
+  </div>
+
+  <!-- Product grid -->
+  <div id="products-catalog" class="product-grid">
+    <div class="loading-state" id="loading-state">
+      <span style="font-size:1.5rem;">💧</span><br/>
+      Loading our premium catalog…
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     B2B CORPORATE QUOTE MODAL
+══════════════════════════════════════════════ -->
+<div id="quoteModal" role="dialog" aria-modal="true" aria-labelledby="quoteModalTitle">
+  <div class="modal-overlay" id="quoteModalOverlay"></div>
+  <div class="modal-box">
+    <button class="modal-close" id="quoteModalClose" aria-label="Close">&times;</button>
+    <h2 id="quoteModalTitle">Corporate Volume Quote</h2>
+    <p style="color:#475569; font-size:0.92rem; margin: 0 0 1.5rem;">
+      Fill in your inquiry details and our B2B sales team will respond within 24 hours.
+    </p>
+
+    {% if request.user.is_authenticated %}
+      <form method="post" action="{% url 'order_request' %}" id="quoteModalForm">
+        {% csrf_token %}
+
+        <input type="hidden" name="product_id" id="quote-product-id" value="" />
+
+        <div class="form-group">
+          <label for="quote-name">Full Name</label>
+          <input type="text" id="quote-name" name="name"
+                 value="{{ request.user.get_full_name|default:request.user.username }}"
+                 required />
+        </div>
+
+        <div class="form-group">
+          <label for="quote-email">Business Email</label>
+          <input type="email" id="quote-email" name="email"
+                 value="{{ request.user.email }}" required />
+        </div>
+
+        <div class="form-group">
+          <label for="quote-company">Company / Organisation</label>
+          <input type="text" id="quote-company" name="company"
+                 value="{{ request.user.profile.company_name|default:'' }}" />
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+          <div class="form-group">
+            <label for="quote-size">Bottle Size</label>
+            <select id="quote-size" name="size">
+              <option value="250 ml">250 ml</option>
+              <option value="500 ml">500 ml</option>
+              <option value="1000 ml">1 Ltr</option>
+              <option value="2 litres">2 Litres</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="quote-quantity">Quantity (units)</label>
+            <input type="number" id="quote-quantity" name="quantity" min="1" value="500" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="quote-details">Additional Requirements</label>
+          <textarea id="quote-details" name="details" rows="3"
+                    placeholder="Custom branding, delivery timeline, specifications…"></textarea>
+        </div>
+
+        <button type="submit" class="submit-btn">
+          🚀 Submit Corporate Inquiry
+        </button>
+      </form>
+    {% else %}
+      <div class="alert alert-info" style="margin:0;">
+        <strong>Please log in</strong> to submit a corporate quote request.
+        <br /><br />
+        <a href="{% url 'login' %}?next={% url 'products' %}" class="button" style="padding:0.65rem 1.5rem; font-size:0.9rem;">
+          Login / Register
+        </a>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function () {
+  'use strict';
+
+  /* ── Account-type detection ─────────────────────────── */
+  const meta       = document.getElementById('account-type-data');
+  const IS_B2B     = meta && meta.dataset.isB2b === 'true';
+  const IS_AUTHED  = meta && meta.dataset.isAuthenticated === 'true';
+
+  /* ── DOM refs ───────────────────────────────────────── */
+  const grid       = document.getElementById('products-catalog');
+  const loadState  = document.getElementById('loading-state');
+  const modal      = document.getElementById('quoteModal');
+  const modalClose = document.getElementById('quoteModalClose');
+  const overlay    = document.getElementById('quoteModalOverlay');
+  const chips      = document.querySelectorAll('#filter-chips .chip');
+
+  let allCards     = [];
+  let activeFilter = 'all';
+
+  /* ── Render product card ────────────────────────────── */
+  function buildCard(p) {
+    const card = document.createElement('div');
+    card.className = 'prod-card';
+    card.dataset.capacity = (p.capacity || '').toLowerCase();
+
+    const priceHtml = IS_B2B
+      ? `<span class="price-hidden-badge">🔒 Corporate Pricing</span>`
+      : (p.price && p.price !== 'TBD'
+          ? `<span style="font-size:1.2rem;font-weight:800;color:#0c1a40;">₹${p.price}</span>
+             <span style="font-size:0.8rem;color:#64748b;margin-left:4px;">/tray</span>`
+          : `<span style="font-weight:600;color:#64748b;">Price on request</span>`
+        );
+
+    const actionHtml = IS_B2B
+      ? `<button class="btn-quote" data-product-id="${p.id}" data-size="${p.capacity}"
+                 aria-label="Request corporate quote for ${p.name}">
+           📋 Request Corporate Quote
+         </button>`
+      : IS_AUTHED
+          ? `<form method="post" action="/cart/add/${p.id}/" style="margin:0;">
+               <input type="hidden" name="csrfmiddlewaretoken" value="${getCookie('csrftoken')}" />
+               <input type="hidden" name="quantity" value="1" />
+               <button type="submit" class="btn-add-cart">🛒 Add to Cart</button>
+             </form>`
+          : `<a href="/login/?next=/products/" class="btn-add-cart">🛒 Add to Cart</a>`;
+
+    const hasImage = p.image_url && p.image_url.trim() !== '' && p.image_url !== 'TBD';
+    const imgHtml = hasImage 
+      ? `<img src="${p.image_url}" alt="${p.name}"
+              style="width:100%;height:200px;object-fit:cover;border-radius:var(--radius-lg) var(--radius-lg) 0 0;"
+              loading="lazy"
+              onerror="this.onerror=null; this.outerHTML='<div class=&quot;glass-image-placeholder&quot;><span class=&quot;water-bottle-icon&quot;>💧</span></div>';" />`
+      : `<div class="glass-image-placeholder"><span class="water-bottle-icon">💧</span></div>`;
+
+    card.innerHTML = `
+      ${imgHtml}
+      <div style="padding:1.25rem;display:flex;flex-direction:column;gap:.75rem;flex:1;">
+        <div>
+          <h2 style="font-size:1.1rem;font-weight:700;margin:0 0 .3rem;color:#0f172a;">${p.name}</h2>
+          <p style="color:#64748b;font-size:.85rem;margin:0;">${p.capacity}</p>
+          ${p.tray_text
+              ? `<p style="font-weight:700;font-size:.85rem;color:#0f172a;margin:.2rem 0 0;">${p.tray_text}</p>`
+              : ''}
+        </div>
+        ${p.description
+            ? `<p style="font-size:.88rem;color:#475569;margin:0;line-height:1.55;flex:1;">${p.description.slice(0,120)}${p.description.length > 120 ? '…' : ''}</p>`
+            : ''}
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;margin-top:auto;">
+          <div>${priceHtml}</div>
+          ${actionHtml}
+        </div>
+      </div>`;
+
+    return card;
+  }
+
+  /* ── CSRF cookie helper ─────────────────────────────── */
+  function getCookie(name) {
+    const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+    return v ? v.pop() : '';
+  }
+
+  /* ── Filter logic ───────────────────────────────────── */
+  function applyFilter(filter) {
+    activeFilter = filter;
+    allCards.forEach(function (card) {
+      const show = filter === 'all' || card.dataset.capacity === filter.toLowerCase();
+      card.style.display = show ? '' : 'none';
+    });
+  }
+
+  chips.forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      chips.forEach(function (c) { c.classList.remove('active'); });
+      chip.classList.add('active');
+      applyFilter(chip.dataset.filter);
+    });
+  });
+
+  /* ── Fetch products from API ────────────────────────── */
+  fetch('/api/products/', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+    .then(function (r) { return r.json(); })
+    .then(function (products) {
+      if (loadState) loadState.remove();
+
+      if (!products.length) {
+        grid.innerHTML = '<p style="text-align:center;padding:2rem;color:#64748b;">No products found.</p>';
+        return;
+      }
+
+      products.forEach(function (p, idx) {
+        const card = buildCard(p);
+        grid.appendChild(card);
+        allCards.push(card);
+
+        /* Staggered entrance animation */
+        setTimeout(function () { card.classList.add('visible'); }, idx * 70);
+      });
+    })
+    .catch(function (err) {
+      console.error('Product load error:', err);
+      if (loadState) loadState.textContent = 'Failed to load products. Please refresh.';
+    });
+
+  /* ── B2B Quote Modal ────────────────────────────────── */
+  function openModal(productId, size) {
+    const pidInput  = document.getElementById('quote-product-id');
+    const sizeSelect = document.getElementById('quote-size');
+    if (pidInput) pidInput.value = productId || '';
+    if (sizeSelect && size) {
+      const opt = sizeSelect.querySelector(`option[value="${size}"]`);
+      if (opt) sizeSelect.value = size;
+    }
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    const firstInput = modal.querySelector('input, select, textarea');
+    if (firstInput) firstInput.focus();
+  }
+
+  function closeModal() {
+    modal.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  /* Custom toast notification helper */
+  function showToast(message) {
+    let toast = document.getElementById('glass-toast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'glass-toast';
+      toast.style.cssText = `
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        background: rgba(255, 255, 255, 0.45);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+        padding: 1rem 2rem;
+        border-radius: var(--radius-md, 1rem);
+        color: #0c1a40;
+        font-weight: 700;
+        z-index: 1000;
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.3s ease, transform 0.3s ease;
+      `;
+      document.body.appendChild(toast);
+    }
+    toast.textContent = message;
+    toast.style.opacity = '1';
+    toast.style.transform = 'translateY(0)';
+    setTimeout(function() {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(20px)';
+    }, 3000);
+  }
+
+  /* Event delegation for quote buttons (cards loaded async) */
+  grid.addEventListener('click', function (e) {
+    const btn = e.target.closest('.btn-quote');
+    if (!btn) return;
+    openModal(btn.dataset.productId, btn.dataset.size);
+  });
+
+  /* Intercept B2C Add to Cart submissions via AJAX fetch() */
+  grid.addEventListener('submit', function (e) {
+    const form = e.target;
+    if (!form.action.includes('/cart/add/')) return;
+    e.preventDefault();
+    
+    const formData = new FormData(form);
+    
+    fetch(form.action, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.success) {
+        // Update nav badge
+        let badge = document.querySelector('.nav-cart-badge');
+        if (!badge) {
+          const navCart = document.getElementById('nav-cart');
+          if (navCart) {
+            badge = document.createElement('span');
+            badge.className = 'nav-cart-badge';
+            navCart.appendChild(badge);
+          }
+        }
+        if (badge) {
+          badge.textContent = data.cart_count;
+        }
+        showToast('💧 Added to your cart successfully!');
+      } else {
+        alert(data.error || 'Failed to add item to cart.');
+      }
+    })
+    .catch(function(err) {
+      console.error('Error adding to cart:', err);
+      alert('Error adding to cart. Please try again.');
+    });
+  });
+
+  if (modalClose) modalClose.addEventListener('click', closeModal);
+  if (overlay)    overlay.addEventListener('click', closeModal);
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && modal.classList.contains('open')) closeModal();
+  });
+
+})();
+</script>
+{% endblock %}

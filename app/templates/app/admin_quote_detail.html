@@ -1,0 +1,213 @@
+{% extends 'app/base.html' %}
+
+{% block title %}Manage Quote Request #{{ quote_request.id }} - CheersThePure{% endblock %}
+
+{% block content %}
+<section class="section animate-fade-up">
+    <!-- Header -->
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid rgba(255,255,255,0.2); padding-bottom: 1rem; margin-bottom: 2rem;">
+        <div>
+            <a href="{% url 'dashboard' %}" style="font-size: 0.88rem; color: var(--accent); text-decoration: none;">← Back to Dashboard</a>
+            <h1 style="margin: 0.5rem 0 0; font-size: 1.75rem;">Manage Quote Request</h1>
+            <p style="margin: 0; color: var(--muted); font-size: 0.9rem;">
+                ID: #{{ quote_request.id }} &nbsp;·&nbsp; Submitted {{ quote_request.created_at|date:"M d, Y H:i" }}
+            </p>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <!-- Inline Email Verification Button -->
+            {% if not quote_request.email_verified %}
+            <form action="{% url 'admin_quote_detail' quote_request.id %}" method="post" style="display: inline;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="verify_email" />
+                <button type="submit" style="padding: 0.55rem 1.1rem; background: #10b981; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.88rem;">
+                    ✓ Verify Email
+                </button>
+            </form>
+            {% else %}
+            <span style="padding: 0.55rem 1.1rem; background: rgba(16,185,129,0.15); color: #10b981; border-radius: 8px; font-weight: 600; font-size: 0.88rem; border: 1px solid rgba(16,185,129,0.3);">
+                ✓ Email Verified
+            </span>
+            {% endif %}
+
+            <!-- Delete button -->
+            <form action="{% url 'admin_delete_quote' quote_request.id %}" method="post" style="display: inline;"
+                  onsubmit="return confirm('Are you sure you want to delete this quote request? This cannot be undone.');">
+                {% csrf_token %}
+                <button type="submit" style="padding: 0.55rem 1.1rem; background: #ef4444; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.88rem;">
+                    🗑 Delete
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+
+        <!-- ── LEFT: Customer & Inquiry Details ── -->
+        <div>
+            <!-- Customer Details Card -->
+            <div class="glass-card fancy-box p-4" style="margin-bottom: 1.5rem;">
+                <h3 style="margin: 0 0 1rem; font-size: 1.1rem; color: var(--accent);">👤 Customer Details</h3>
+                <table style="width: 100%; font-size: 0.93rem; border-collapse: collapse;">
+                    <tbody>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.15);">
+                            <th style="text-align: left; padding: 0.6rem 0; color: var(--muted); font-weight: 500;">Name</th>
+                            <td style="padding: 0.6rem 0; text-align: right; font-weight: 600;">{{ quote_request.name }}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.15);">
+                            <th style="text-align: left; padding: 0.6rem 0; color: var(--muted); font-weight: 500;">Email</th>
+                            <td style="padding: 0.6rem 0; text-align: right;">
+                                <a href="mailto:{{ quote_request.email }}" style="color: var(--accent);">{{ quote_request.email }}</a>
+                            </td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.15);">
+                            <th style="text-align: left; padding: 0.6rem 0; color: var(--muted); font-weight: 500;">Company</th>
+                            <td style="padding: 0.6rem 0; text-align: right;">{{ quote_request.company|default:"—" }}</td>
+                        </tr>
+                        <tr>
+                            <th style="text-align: left; padding: 0.6rem 0; color: var(--muted); font-weight: 500;">Email Verified</th>
+                            <td style="padding: 0.6rem 0; text-align: right; font-weight: 700;">
+                                {% if quote_request.email_verified %}
+                                    <span style="color: #10b981;">✓ Verified</span>
+                                {% else %}
+                                    <span style="color: #ef4444;">✗ Unverified</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Inquiry Specs Card -->
+            <div class="glass-card fancy-box p-4" style="margin-bottom: 1.5rem;">
+                <h3 style="margin: 0 0 1rem; font-size: 1.1rem; color: var(--accent);">📋 Inquiry Specs</h3>
+
+                {% if quote_request.product %}
+                <table style="width: 100%; font-size: 0.93rem; border-collapse: collapse;">
+                    <tbody>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.15);">
+                            <th style="text-align: left; padding: 0.6rem 0; color: var(--muted); font-weight: 500;">Product</th>
+                            <td style="padding: 0.6rem 0; text-align: right; font-weight: 600;">{{ quote_request.product.name }}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.15);">
+                            <th style="text-align: left; padding: 0.6rem 0; color: var(--muted); font-weight: 500;">Capacity</th>
+                            <td style="padding: 0.6rem 0; text-align: right;">{{ quote_request.size }}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.15);">
+                            <th style="text-align: left; padding: 0.6rem 0; color: var(--muted); font-weight: 500;">Quantity</th>
+                            <td style="padding: 0.6rem 0; text-align: right; font-weight: 700;">{{ quote_request.quantity }} unit(s)</td>
+                        </tr>
+                        <tr>
+                            <th style="text-align: left; padding: 0.6rem 0; color: var(--muted); font-weight: 500;">Status</th>
+                            <td style="padding: 0.6rem 0; text-align: right; font-weight: 700; color: var(--accent);">{{ quote_request.get_status_display }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                {% else %}
+                <!-- ── Empty Product Guard — Frosted Glass Alert ── -->
+                <div style="background: rgba(234,179,8,0.12); border: 1px solid rgba(234,179,8,0.35); border-radius: 0.85rem; padding: 1rem 1.25rem; backdrop-filter: blur(8px);">
+                    <strong style="color: #ca8a04;">⚠ No product linked</strong>
+                    <p style="margin: 0.35rem 0 0; color: var(--muted); font-size: 0.88rem;">
+                        The customer requested a custom inquiry without selecting a specific product.
+                        Size: <strong>{{ quote_request.size }}</strong> &nbsp;·&nbsp; Qty: <strong>{{ quote_request.quantity }}</strong>
+                    </p>
+                </div>
+                {% endif %}
+
+                {% if quote_request.details %}
+                <div style="background: rgba(255,255,255,0.12); padding: 0.85rem; border-radius: 0.65rem; margin-top: 1rem; font-size: 0.88rem; border: 1px solid rgba(255,255,255,0.15);">
+                    <strong>Inquiry Details:</strong>
+                    <p style="margin: 0.35rem 0 0; color: var(--muted); line-height: 1.55;">{{ quote_request.details }}</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Status Update Card -->
+            <div class="glass-card fancy-box p-4">
+                <h3 style="margin: 0 0 0.75rem; font-size: 1.1rem; color: var(--accent);">🔄 Update Status</h3>
+                <form action="{% url 'admin_update_quote_status' quote_request.id %}" method="post" style="display: flex; gap: 1rem; align-items: center;">
+                    {% csrf_token %}
+                    <select name="status" required style="flex-grow: 1; padding: 0.65rem 1rem; border-radius: 0.65rem; border: 1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.75); font-size: 0.93rem;">
+                        {% for val, label in status_choices %}
+                            <option value="{{ val }}" {% if quote_request.status == val %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="button" style="padding: 0.65rem 1.25rem; font-size: 0.9rem; white-space: nowrap;">Update</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- ── RIGHT: Submit Deal & Proposals Log ── -->
+        <div>
+            <!-- Inline Deal Submission Form (submit_deal action) -->
+            <div class="glass-card fancy-box p-4" style="margin-bottom: 1.5rem;">
+                <h3 style="margin: 0 0 0.25rem; font-size: 1.1rem; color: var(--accent);">💼 Post Price Proposal</h3>
+                <p style="font-size: 0.82rem; color: var(--muted); margin: 0 0 1rem;">
+                    Creates a proposal, notifies the client, and auto-advances status to <em>Quoted</em>.
+                </p>
+                <form action="{% url 'admin_quote_detail' quote_request.id %}" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="submit_deal" />
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <label style="display: flex; flex-direction: column; font-size: 0.88rem; font-weight: 600; color: var(--fg);">
+                            Price Per Unit (₹) <em style="font-weight: 400; color: var(--muted);">(optional)</em>
+                            <input type="number" name="price_per_unit" step="0.01" min="0" placeholder="e.g. 2.45"
+                                   style="margin-top: 0.3rem; padding: 0.65rem 0.85rem; border-radius: 0.55rem; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.75); font-size: 0.93rem;" />
+                        </label>
+                        <label style="display: flex; flex-direction: column; font-size: 0.88rem; font-weight: 600; color: var(--fg);">
+                            Est. Delivery <em style="font-weight: 400; color: var(--muted);">(optional)</em>
+                            <input type="text" name="estimated_delivery" placeholder="e.g. 5–7 business days"
+                                   style="margin-top: 0.3rem; padding: 0.65rem 0.85rem; border-radius: 0.55rem; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.75); font-size: 0.93rem;" />
+                        </label>
+                    </div>
+                    <label style="display: flex; flex-direction: column; font-size: 0.88rem; font-weight: 600; color: var(--fg); margin-bottom: 1rem;">
+                        Message / Proposal Details
+                        <textarea name="message" required rows="4"
+                                  placeholder="Write proposal details, material descriptions, packaging terms, etc..."
+                                  style="margin-top: 0.3rem; padding: 0.65rem 0.85rem; border-radius: 0.55rem; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.75); font: inherit; resize: vertical;"></textarea>
+                    </label>
+                    <button type="submit" class="button" style="width: 100%; padding: 0.75rem;">
+                        📨 Submit Proposal &amp; Notify Client
+                    </button>
+                </form>
+            </div>
+
+            <!-- Proposals Log -->
+            <div class="glass-card fancy-box p-4">
+                <h3 style="margin: 0 0 1rem; font-size: 1.1rem; color: var(--accent); border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 0.65rem;">
+                    📁 Proposal Logs
+                </h3>
+                {% if replies %}
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    {% for reply in replies %}
+                    <div class="fancy-box" style="background: rgba(255,255,255,0.4); border-radius: 0.85rem; padding: 1rem; font-size: 0.9rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.6rem;">
+                            <strong style="color: var(--accent);">{{ reply.admin_name }}</strong>
+                            <span style="font-size: 0.75rem; color: var(--muted);">{{ reply.created_at|date:"M d, Y H:i" }}</span>
+                        </div>
+                        <p style="margin: 0 0 0.6rem; color: var(--fg); line-height: 1.5;">{{ reply.message|linebreaksbr }}</p>
+                        <div style="font-size: 0.82rem; font-weight: 700; color: var(--accent); display: flex; gap: 1.25rem; flex-wrap: wrap;">
+                            {% if reply.price_per_unit %}
+                                <span>💰 ₹{{ reply.price_per_unit|floatformat:2 }}/unit</span>
+                            {% endif %}
+                            {% if reply.estimated_delivery %}
+                                <span>🚚 {{ reply.estimated_delivery }}</span>
+                            {% endif %}
+                            {% if reply.total_price %}
+                                <span>📦 Total: ₹{{ reply.total_price|floatformat:2 }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div style="background: rgba(255,255,255,0.15); border: 1px dashed rgba(255,255,255,0.3); border-radius: 0.85rem; padding: 1.75rem; text-align: center;">
+                    <p style="color: var(--muted); font-size: 0.88rem; margin: 0;">No proposals logged yet. Use the form above to send your first proposal.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+</section>
+{% endblock %}

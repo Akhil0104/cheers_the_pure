@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Invoice {{ order.order_number }} — Cheers the Pure Water</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ═════════════════════════════════════════════════
+       CHEERS THE PURE WATER — PREMIUM INVOICE TEMPLATE
+    ═════════════════════════════════════════════════ */
+
+    :root {
+      --brand-dark:   #0c1a40;
+      --brand-blue:   #0284c7;
+      --brand-aqua:   #0ea5e9;
+      --brand-light:  #e0f2fe;
+      --text:         #0f172a;
+      --muted:        #475569;
+      --border:       #e2e8f0;
+      --success:      #16a34a;
+      --paid-red:     rgba(220, 38, 38, 0.85);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+      color: var(--text);
+      background: #f8fafc;
+      margin: 0;
+      padding: 2rem 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Page wrapper ── */
+    .invoice-page {
+      max-width: 820px;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 1.5rem;
+      box-shadow: 0 24px 80px rgba(15, 23, 42, 0.12);
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* ═════════════════════════════════════
+       DIAGONAL "PAID" WATERMARK STAMP
+    ═════════════════════════════════════ */
+    .paid-stamp {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-28deg);
+      z-index: 10;
+      pointer-events: none;
+      border: 5px solid var(--paid-red);
+      color: var(--paid-red);
+      font-size: 5.5rem;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      padding: 0.4rem 1.2rem;
+      border-radius: 0.5rem;
+      opacity: 0.18;
+      white-space: nowrap;
+      text-transform: uppercase;
+      user-select: none;
+    }
+
+    /* ── Corporate Header ── */
+    .invoice-header {
+      background: linear-gradient(135deg, var(--brand-dark) 0%, #0e3a6e 60%, #0369a1 100%);
+      padding: 2.5rem 3rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 2rem;
+    }
+
+    .brand-block h1 {
+      margin: 0 0 0.3rem;
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-block .brand-sub {
+      color: rgba(255,255,255,0.65);
+      font-size: 0.85rem;
+      margin: 0;
+    }
+
+    .brand-block .brand-contact {
+      color: rgba(255,255,255,0.5);
+      font-size: 0.8rem;
+      margin: 0.4rem 0 0;
+    }
+
+    /* Invoice number + date (top right) */
+    .invoice-meta-block {
+      text-align: right;
+    }
+
+    .invoice-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.45);
+      margin-bottom: 0.2rem;
+    }
+
+    .invoice-number {
+      font-size: 1.45rem;
+      font-weight: 800;
+      color: #ffffff;
+    }
+
+    .invoice-date {
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.6);
+      margin-top: 0.3rem;
+    }
+
+    /* Paid badge (header area) */
+    .paid-badge-header {
+      display: inline-block;
+      background: rgba(22, 163, 74, 0.15);
+      border: 2px solid rgba(22, 163, 74, 0.5);
+      color: #86efac;
+      font-size: 0.82rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 0.3rem 0.9rem;
+      border-radius: 999px;
+      margin-top: 0.6rem;
+    }
+
+    /* ── Body Area ── */
+    .invoice-body {
+      padding: 2.5rem 3rem;
+      position: relative;
+    }
+
+    /* ── Bill To / Details grid ── */
+    .invoice-parties {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      margin-bottom: 2.5rem;
+      padding-bottom: 2rem;
+      border-bottom: 1.5px solid var(--border);
+    }
+
+    .party-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--brand-aqua);
+      margin-bottom: 0.6rem;
+    }
+
+    .party-name {
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: var(--text);
+      margin-bottom: 0.25rem;
+    }
+
+    .party-detail {
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.7;
+    }
+
+    .payment-detail {
+      text-align: right;
+    }
+
+    .payment-detail .detail-row {
+      display: flex;
+      justify-content: flex-end;
+      gap: 1rem;
+      margin-bottom: 0.3rem;
+      font-size: 0.88rem;
+    }
+
+    .payment-detail .detail-row .dk {
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .payment-detail .detail-row .dv {
+      font-weight: 700;
+      color: var(--text);
+      min-width: 160px;
+      text-align: right;
+    }
+
+    /* ── Items Table ── */
+    .items-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 2rem;
+    }
+
+    .items-table thead tr {
+      background: linear-gradient(135deg, var(--brand-dark), #1e3a5f);
+    }
+
+    .items-table thead th {
+      padding: 0.9rem 1rem;
+      color: rgba(255,255,255,0.8);
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      text-align: left;
+    }
+
+    .items-table thead th:last-child {
+      text-align: right;
+    }
+
+    .items-table tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background 0.2s;
+    }
+
+    .items-table tbody tr:hover {
+      background: #f0f9ff;
+    }
+
+    .items-table tbody tr:last-child {
+      border-bottom: none;
+    }
+
+    .items-table td {
+      padding: 1rem 1rem;
+      font-size: 0.92rem;
+      color: var(--text);
+      vertical-align: middle;
+    }
+
+    .items-table td:last-child {
+      text-align: right;
+      font-weight: 700;
+    }
+
+    .item-name {
+      font-weight: 600;
+    }
+
+    .item-capacity {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* ── Totals ── */
+    .totals-section {
+      margin-left: auto;
+      max-width: 320px;
+      margin-bottom: 2.5rem;
+    }
+
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.55rem 0;
+      font-size: 0.92rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--muted);
+    }
+
+    .total-row:last-child {
+      border-bottom: none;
+      padding-top: 1rem;
+      color: var(--brand-dark);
+      font-weight: 800;
+      font-size: 1.15rem;
+    }
+
+    .total-row span:last-child {
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .total-row:last-child span:last-child {
+      font-size: 1.3rem;
+      color: var(--brand-blue);
+    }
+
+    /* ── Invoice Footer ── */
+    .invoice-footer {
+      background: #f8fafc;
+      border-top: 1.5px solid var(--border);
+      padding: 1.75rem 3rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .invoice-footer .thank-you {
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .invoice-footer .thank-you strong {
+      color: var(--brand-dark);
+    }
+
+    .invoice-footer .token-display {
+      font-size: 0.72rem;
+      font-family: 'Courier New', monospace;
+      color: #94a3b8;
+      background: #f1f5f9;
+      padding: 0.35rem 0.75rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border);
+      word-break: break-all;
+      max-width: 300px;
+      text-align: right;
+    }
+
+    /* ── Print Controls ── */
+    .print-controls {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      padding: 1.5rem 3rem 0;
+      flex-wrap: wrap;
+    }
+
+    .print-btn {
+      background: linear-gradient(135deg, #0ea5e9, #4f46e5);
+      color: #fff;
+      border: none;
+      border-radius: 999px;
+      padding: 0.8rem 2rem;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 18px rgba(14,165,233,0.3);
+      font-family: inherit;
+    }
+
+    .print-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(14,165,233,0.42); }
+
+    .back-btn {
+      background: rgba(255,255,255,0.9);
+      color: #0f172a;
+      border: 1.5px solid var(--border);
+      border-radius: 999px;
+      padding: 0.8rem 2rem;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-family: inherit;
+      transition: background 0.2s;
+    }
+    .back-btn:hover { background: #f0f9ff; }
+
+    /* ── Print media query ── */
+    @media print {
+      body { background: #fff; padding: 0; }
+      .no-print { display: none !important; }
+      .invoice-page {
+        box-shadow: none;
+        border-radius: 0;
+        max-width: 100%;
+      }
+      .paid-stamp { opacity: 0.12; }
+    }
+
+    @media (max-width: 640px) {
+      .invoice-header, .invoice-body, .invoice-footer { padding: 1.5rem; }
+      .invoice-header { flex-direction: column; }
+      .invoice-meta-block { text-align: left; }
+      .invoice-parties { grid-template-columns: 1fr; }
+      .payment-detail { text-align: left; }
+      .payment-detail .detail-row { justify-content: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Print Controls (outside page for no-print) -->
+  <div class="print-controls no-print">
+    <button class="print-btn" onclick="window.print()">
+      🖨️ Print / Save as PDF
+    </button>
+    <a class="back-btn" href="{% url 'order_details' order.id %}">
+      ← Back to Order
+    </a>
+  </div>
+
+  <div class="invoice-page">
+
+    <!-- ══════════════════════════════════
+         DIAGONAL "PAID" WATERMARK STAMP
+    ══════════════════════════════════ -->
+    {% if is_paid %}
+      <div class="paid-stamp" aria-hidden="true">PAID</div>
+    {% endif %}
+
+    <!-- ══════════════════════════════════
+         CORPORATE HEADER
+    ══════════════════════════════════ -->
+    <header class="invoice-header">
+      <div class="brand-block">
+        <h1>Cheers the Pure Water</h1>
+        <p class="brand-sub">Premium Sustainable Water Bottles</p>
+        <p class="brand-contact">cheersthepure@gmail.com · cheerswaterindia.com</p>
+        {% if is_paid %}
+          <span class="paid-badge-header">✓ PAID</span>
+        {% endif %}
+      </div>
+
+      <div class="invoice-meta-block">
+        <div class="invoice-label">Invoice</div>
+        <div class="invoice-number">#{{ order.order_number }}</div>
+        <div class="invoice-date">
+          {{ order.invoice_generated_at|default:order.created_at|date:"F j, Y" }}
+        </div>
+        {% if payment %}
+          <div style="margin-top: 0.5rem;">
+            <span style="font-size:0.78rem;color:rgba(255,255,255,0.45);">Transaction</span><br/>
+            <span style="font-size:0.8rem;color:rgba(255,255,255,0.65);font-family:'Courier New',monospace;">
+              {{ payment.transaction_id|truncatechars:24 }}
+            </span>
+          </div>
+        {% endif %}
+      </div>
+    </header>
+
+    <!-- ══════════════════════════════════
+         INVOICE BODY
+    ══════════════════════════════════ -->
+    <div class="invoice-body">
+
+      <!-- Bill To / Payment Details -->
+      <div class="invoice-parties">
+        <div>
+          <div class="party-label">Bill To</div>
+          <div class="party-name">{{ order.shipping_name }}</div>
+          <div class="party-detail">
+            {{ order.shipping_email }}<br />
+            {% if order.shipping_phone %}{{ order.shipping_phone }}<br />{% endif %}
+            {{ order.shipping_address }}<br />
+            {{ order.shipping_city }}, {{ order.shipping_state }} {{ order.shipping_postal_code }}
+          </div>
+        </div>
+
+        <div class="payment-detail">
+          <div class="party-label">Payment Info</div>
+          {% if payment %}
+            <div class="detail-row">
+              <span class="dk">Status</span>
+              <span class="dv" style="color:#16a34a;font-weight:800;">
+                {{ payment.get_status_display|upper }}
+              </span>
+            </div>
+            <div class="detail-row">
+              <span class="dk">Method</span>
+              <span class="dv">{{ payment.payment_method|title }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="dk">Paid On</span>
+              <span class="dv">{{ payment.updated_at|date:"M j, Y" }}</span>
+            </div>
+          {% endif %}
+          <div class="detail-row">
+            <span class="dk">Order Date</span>
+            <span class="dv">{{ order.created_at|date:"M j, Y" }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Line Items Table ── -->
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Unit Price</th>
+            <th>Qty</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in order_items %}
+          <tr>
+            <td>
+              <div class="item-name">{{ item.product_name }}</div>
+              {% if item.product and item.product.capacity %}
+                <div class="item-capacity">{{ item.product.capacity }}</div>
+              {% endif %}
+            </td>
+            <td>₹{{ item.product_price }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>₹{{ item.get_total_price }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="4" style="text-align:center;color:#94a3b8;padding:2rem;">
+              No items found for this order.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <!-- ── Totals ── -->
+      <div class="totals-section">
+        <div class="total-row">
+          <span>Subtotal</span>
+          <span>₹{{ order.total_amount }}</span>
+        </div>
+        <div class="total-row">
+          <span>Shipping</span>
+          <span style="color:#16a34a;font-weight:700;">FREE</span>
+        </div>
+        <div class="total-row">
+          <span>Tax (GST included)</span>
+          <span>₹0.00</span>
+        </div>
+        <div class="total-row">
+          <span>Total Paid</span>
+          <span>₹{{ order.total_amount }}</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ══════════════════════════════════
+         INVOICE FOOTER
+    ══════════════════════════════════ -->
+    <footer class="invoice-footer">
+      <div class="thank-you">
+        <strong>Thank you for your purchase!</strong><br />
+        This invoice was generated automatically upon payment confirmation.<br />
+        For support, contact us at cheersthepure@gmail.com
+      </div>
+      {% if order.invoice_token %}
+        <div class="token-display" title="Secure Invoice Token">
+          🔐 {{ order.invoice_token|slice:":32" }}…
+        </div>
+      {% endif %}
+    </footer>
+
+  </div><!-- /.invoice-page -->
+
+</body>
+</html>

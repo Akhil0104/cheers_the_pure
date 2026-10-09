@@ -1,0 +1,243 @@
+{% extends 'app/base.html' %}
+{% load static %}
+
+{% block title %}Create Account — Cheers the Pure Water{% endblock %}
+{% block meta_description %}Register a free account using your email address and optional mobile number. Corporate email gets instant B2B access.{% endblock %}
+
+{% block content %}
+<section class="section auth-section centered-form" style="max-width: 520px; margin: 2.5rem auto;">
+
+  <!-- Header -->
+  <div class="section-header center-text" style="margin-bottom: 2rem;">
+    <div style="font-size: 3rem; margin-bottom: 0.75rem;">✨</div>
+    <h1 style="font-size: 1.9rem; font-weight: 800; margin: 0 0 0.4rem;
+                background: linear-gradient(135deg, #0c1a40, #0ea5e9);
+                -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+      Create Your Account
+    </h1>
+    <p style="color: #475569; margin: 0; font-size: 0.95rem;">
+      No username required — just your <strong>email</strong> (or <strong>mobile</strong>) and a password.
+    </p>
+  </div>
+
+  <!-- Account-type auto-detection badge -->
+  <div id="account-type-badge" style="
+    display: none;
+    padding: 0.7rem 1rem;
+    border-radius: 0.85rem;
+    font-size: 0.88rem;
+    font-weight: 600;
+    margin-bottom: 1.25rem;
+    text-align: center;
+    transition: all 0.3s ease;
+  ">
+    <span id="badge-icon"></span>&nbsp;<span id="badge-text"></span>
+  </div>
+
+  <!-- Global form errors -->
+  {% if form.non_field_errors %}
+    <div class="alert alert-error" role="alert">
+      {{ form.non_field_errors.0 }}
+    </div>
+  {% endif %}
+
+  <!-- Registration form -->
+  <form method="post" id="reg-form" novalidate>
+    {% csrf_token %}
+
+    <!-- Email -->
+    <div class="form-group" style="margin-bottom: 1.2rem;">
+      <label for="id_reg_email" style="display: block; font-weight: 600; margin-bottom: 0.45rem; color: #0f172a;">
+        Email Address <span style="color: #ef4444;">*</span>
+      </label>
+      <input
+        type="email"
+        name="email"
+        id="id_reg_email"
+        class="form-input"
+        placeholder="your@email.com  or  yourname@company.com"
+        value="{{ form.email.value|default:'' }}"
+        autocomplete="email"
+        required
+      />
+      {% if form.email.errors %}
+        <span class="form-error" style="color: #ef4444; font-size: 0.82rem; display: block; margin-top: 0.3rem;">
+          {{ form.email.errors.0 }}
+        </span>
+      {% endif %}
+      <span id="email-domain-hint" style="font-size: 0.78rem; color: #64748b; display: block; margin-top: 0.3rem;"></span>
+    </div>
+
+    <!-- Mobile Number (optional) -->
+    <div class="form-group" style="margin-bottom: 1.2rem;">
+      <label for="id_reg_mobile" style="display: block; font-weight: 600; margin-bottom: 0.45rem; color: #0f172a;">
+        Mobile Number <span style="color: #94a3b8; font-weight: 400; font-size: 0.82rem;">(optional — enables mobile login)</span>
+      </label>
+      <input
+        type="tel"
+        name="mobile"
+        id="id_reg_mobile"
+        class="form-input"
+        placeholder="+91 9876543210"
+        value="{{ form.mobile.value|default:'' }}"
+        autocomplete="tel"
+        inputmode="tel"
+      />
+      {% if form.mobile.errors %}
+        <span class="form-error" style="color: #ef4444; font-size: 0.82rem; display: block; margin-top: 0.3rem;">
+          {{ form.mobile.errors.0 }}
+        </span>
+      {% endif %}
+    </div>
+
+    <!-- Password -->
+    <div class="form-group" style="margin-bottom: 1.2rem;">
+      <label for="id_reg_password1" style="display: block; font-weight: 600; margin-bottom: 0.45rem; color: #0f172a;">
+        Password <span style="color: #ef4444;">*</span>
+      </label>
+      <input
+        type="password"
+        name="password1"
+        id="id_reg_password1"
+        class="form-input"
+        placeholder="Choose a strong password (min. 8 characters)"
+        autocomplete="new-password"
+        required
+      />
+      {% if form.password1.errors %}
+        <span class="form-error" style="color: #ef4444; font-size: 0.82rem; display: block; margin-top: 0.3rem;">
+          {{ form.password1.errors.0 }}
+        </span>
+      {% endif %}
+    </div>
+
+    <!-- Confirm Password -->
+    <div class="form-group" style="margin-bottom: 1.75rem;">
+      <label for="id_reg_password2" style="display: block; font-weight: 600; margin-bottom: 0.45rem; color: #0f172a;">
+        Confirm Password <span style="color: #ef4444;">*</span>
+      </label>
+      <input
+        type="password"
+        name="password2"
+        id="id_reg_password2"
+        class="form-input"
+        placeholder="Repeat your password"
+        autocomplete="new-password"
+        required
+      />
+      {% if form.password2.errors %}
+        <span class="form-error" style="color: #ef4444; font-size: 0.82rem; display: block; margin-top: 0.3rem;">
+          {{ form.password2.errors.0 }}
+        </span>
+      {% endif %}
+      <span id="pw-match-hint" style="font-size: 0.78rem; display: block; margin-top: 0.3rem;"></span>
+    </div>
+
+    <!-- Submit -->
+    <button type="submit" class="button" id="reg-submit-btn" style="width: 100%; font-size: 1rem; padding: 1rem;">
+      🚀 Create Account
+    </button>
+  </form>
+
+  <!-- Login redirect -->
+  <div class="center-text" style="margin-top: 1.5rem; font-size: 0.9rem;">
+    <a href="{% url 'login' %}" style="color: #0ea5e9; text-decoration: none; font-weight: 500;"
+       id="go-to-login-link">
+      Already have an account? Sign In →
+    </a>
+  </div>
+
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function () {
+  'use strict';
+
+  const PUBLIC_DOMAINS = new Set([
+    'gmail.com','googlemail.com','yahoo.com','yahoo.co.in','yahoo.co.uk',
+    'outlook.com','hotmail.com','live.com','msn.com','icloud.com','me.com',
+    'mac.com','aol.com','protonmail.com','proton.me','mail.com','gmx.com',
+    'zoho.com','rediffmail.com','ymail.com',
+  ]);
+
+  const emailInput  = document.getElementById('id_reg_email');
+  const badge       = document.getElementById('account-type-badge');
+  const badgeIcon   = document.getElementById('badge-icon');
+  const badgeText   = document.getElementById('badge-text');
+  const domainHint  = document.getElementById('email-domain-hint');
+  const pw1         = document.getElementById('id_reg_password1');
+  const pw2         = document.getElementById('id_reg_password2');
+  const pwHint      = document.getElementById('pw-match-hint');
+  const submitBtn   = document.getElementById('reg-submit-btn');
+
+  // ── Email domain detection ─────────────────────────────────────────
+  function checkEmailDomain() {
+    const val    = emailInput.value.trim();
+    const atIdx  = val.indexOf('@');
+    if (atIdx === -1 || atIdx === val.length - 1) {
+      badge.style.display = 'none';
+      domainHint.textContent = '';
+      return;
+    }
+
+    const domain = val.slice(atIdx + 1).toLowerCase();
+    if (!domain.includes('.')) { badge.style.display = 'none'; return; }
+
+    const isPublic = PUBLIC_DOMAINS.has(domain) ||
+                     [...PUBLIC_DOMAINS].some(d => domain.endsWith('.' + d));
+
+    badge.style.display = 'block';
+    if (isPublic) {
+      badge.style.background = 'rgba(16, 185, 129, 0.12)';
+      badge.style.border     = '1.5px solid rgba(16, 185, 129, 0.35)';
+      badge.style.color      = '#065f46';
+      badgeIcon.textContent  = '🛒';
+      badgeText.textContent  = 'Personal email detected — you\'ll be registered as a B2C (Retail) customer.';
+      domainHint.textContent = 'You\'ll see retail prices and can add products to your cart.';
+    } else {
+      badge.style.background = 'rgba(79, 70, 229, 0.1)';
+      badge.style.border     = '1.5px solid rgba(79, 70, 229, 0.3)';
+      badge.style.color      = '#3730a3';
+      badgeIcon.textContent  = '🏢';
+      badgeText.textContent  = 'Corporate email detected — you\'ll be registered as a B2B (Wholesale) account.';
+      domainHint.textContent = 'Corporate accounts get access to bulk quote requests (pricing shown on request).';
+    }
+  }
+
+  if (emailInput) emailInput.addEventListener('input', checkEmailDomain);
+
+  // Restore badge if form had errors
+  if (emailInput && emailInput.value.trim().includes('@')) {
+    checkEmailDomain();
+  }
+
+  // ── Password match hint ────────────────────────────────────────────
+  function checkPasswords() {
+    const v1 = pw1 ? pw1.value : '';
+    const v2 = pw2 ? pw2.value : '';
+    if (!v1 || !v2) { pwHint.textContent = ''; return; }
+    if (v1 === v2) {
+      pwHint.style.color   = '#16a34a';
+      pwHint.textContent   = '✓ Passwords match';
+    } else {
+      pwHint.style.color   = '#dc2626';
+      pwHint.textContent   = '✗ Passwords do not match';
+    }
+  }
+
+  if (pw1) pw1.addEventListener('input', checkPasswords);
+  if (pw2) pw2.addEventListener('input', checkPasswords);
+
+  // ── Prevent double-submit ──────────────────────────────────────────
+  const form = document.getElementById('reg-form');
+  if (form && submitBtn) {
+    form.addEventListener('submit', function () {
+      submitBtn.disabled     = true;
+      submitBtn.textContent  = '⏳ Creating account…';
+    });
+  }
+})();
+</script>
+{% endblock %}

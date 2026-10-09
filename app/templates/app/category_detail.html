@@ -1,0 +1,62 @@
+{% extends 'app/base.html' %}
+{% load static %}
+
+{% block title %}{{ category.name }} - CheersThePure{% endblock %}
+
+{% block content %}
+<section class="section">
+    <div class="section-header">
+        <h1>{{ category.name }}</h1>
+        <p>{{ category.description }}</p>
+    </div>
+    <div class="product-grid">
+        {% for product in products %}
+            <article class="product-card">
+                {% if product.image %}
+                    <img class="product-card-image" src="{{ product.image.url }}" alt="{{ product.name }}" />
+                {% elif product.image_url %}
+                    <img class="product-card-image" src="{{ product.image_url }}" alt="{{ product.name }}" />
+                {% elif product.capacity == '250 ml' %}
+                    <img class="product-card-image" src="{% static 'app/media/250ml.jpg' %}" alt="{{ product.name }}" />
+                {% elif product.capacity == '500 ml' %}
+                    <img class="product-card-image" src="{% static 'app/media/500ml.jpg' %}" alt="{{ product.name }}" />
+                {% elif product.capacity == '1000 ml' or product.capacity == '1 Ltr' %}
+                    <img class="product-card-image" src="{% static 'app/media/1ltr.jpg' %}" alt="{{ product.name }}" />
+                {% elif product.capacity == '2 litres' %}
+                    <img class="product-card-image" src="{% static 'app/media/2ltr.jpg' %}" alt="{{ product.name }}" />
+                {% else %}
+                    <img class="product-card-image" src="{% static 'app/media/500ml.jpg' %}" alt="{{ product.name }}" />
+                {% endif %}
+                <h2>{{ product.name }}</h2>
+                <p class="product-meta">
+                    {{ product.capacity }} 
+                    • 
+                    {% if product.capacity == '250 ml' %}
+                        Price: ₹140
+                    {% elif product.capacity == '500 ml' %}
+                        Price: TBD
+                    {% elif product.capacity == '1000 ml' or product.capacity == '1 Ltr' %}
+                        Price: ₹120
+                    {% elif product.capacity == '2 litres' %}
+                        Price: TBD
+                    {% else %}
+                        Price: ₹{{ product.price|floatformat:2 }}
+                    {% endif %}
+                </p>
+                <p class="product-tray">
+                    {% if product.capacity == '250 ml' %}1 tray = 18 pieces
+                    {% elif product.capacity == '500 ml' %}1 tray = 18 bottles
+                    {% elif product.capacity == '1000 ml' or product.capacity == '1 Ltr' %}1 tray = 12 bottles
+                    {% elif product.capacity == '2 litres' %}1 tray = 6 bottles
+                    {% else %}1 tray = 12 bottles
+                    {% endif %}
+                </p>
+                <p>{{ product.description|truncatechars:160 }}</p>
+                <a class="button button-secondary" href="{% url 'product_detail' product.pk %}">View details</a>
+            </article>
+        {% empty %}
+            <p>There are no products in this category yet.</p>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

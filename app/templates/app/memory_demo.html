@@ -1,0 +1,641 @@
+{% extends 'app/base.html' %}
+{% load static %}
+
+{% block title %}DispatchAI Memory Demonstration — Cheers the Pure Water{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'app/dispatch_chat.css' %}">
+<style>
+  .demo-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+  }
+  .demo-header-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    color: white;
+    padding: 0.35rem 0.85rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .demo-grid {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+  }
+  @media (max-width: 992px) {
+    .demo-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Step Control Cards */
+  .demo-step-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 1rem;
+    padding: 1.25rem;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.04);
+    margin-bottom: 1.25rem;
+  }
+  .demo-step-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+  }
+  .demo-step-num {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #4f46e5;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .demo-prompt-box {
+    background: #f8fafc;
+    border-left: 3px solid #0284c7;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.88rem;
+    color: #0f172a;
+    font-weight: 500;
+    margin-bottom: 0.75rem;
+  }
+
+  /* Chat Stream */
+  .demo-chat-box {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 1.25rem;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
+  }
+  .demo-chat-messages {
+    padding: 1.25rem;
+    min-height: 420px;
+    max-height: 540px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    background: #ffffff;
+  }
+  .demo-session-divider {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 1rem 0;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+  }
+  .demo-session-divider::before,
+  .demo-session-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #e2e8f0;
+  }
+
+  /* Evaluation Badges */
+  .session-badge-created {
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    color: #065f46;
+    padding: 0.35rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.5rem;
+  }
+  .session-badge-recalled {
+    background: #f5f3ff;
+    border: 1px solid #ddd6fe;
+    color: #6d28d9;
+    padding: 0.35rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.5rem;
+  }
+
+  /* Technical Inspection Panel */
+  .tech-panel {
+    background: #0f172a;
+    color: #f8fafc;
+    border-radius: 1.25rem;
+    padding: 1.5rem;
+    box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+  .tech-panel-header {
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding-bottom: 0.75rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .tech-panel-title {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #38bdf8;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .tech-item {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 0.75rem;
+    padding: 0.85rem 1rem;
+  }
+  .tech-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    color: #94a3b8;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.35rem;
+    display: flex;
+    justify-content: space-between;
+  }
+  .tech-value {
+    font-family: monospace;
+    font-size: 0.85rem;
+    color: #e2e8f0;
+    word-break: break-all;
+  }
+  .tech-list {
+    margin: 0;
+    padding-left: 1.25rem;
+    font-size: 0.8rem;
+    color: #cbd5e1;
+  }
+  .tech-list li {
+    margin-bottom: 0.25rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="demo-container">
+
+  {# ── Header ── #}
+  <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
+    <div>
+      <span class="demo-header-badge">
+        🧠 Evaluation Feature • Hindsight Integration
+      </span>
+      <h1 style="margin: 0.5rem 0 0.25rem 0; font-size: 1.75rem; font-weight: 800; color: #0f172a;">
+        DispatchAI Memory Demonstration
+      </h1>
+      <p style="color: #64748b; margin: 0; font-size: 0.95rem;">
+        Testing persistent cross-session memory retention &amp; recall for B2B distributor <strong>{{ demo_company }}</strong>.
+      </p>
+    </div>
+
+    <div style="display: flex; gap: 0.65rem; align-items: center; flex-wrap: wrap;">
+      <button type="button" id="btn-reset-demo" class="button button-secondary" style="font-size: 0.82rem; padding: 0.45rem 0.95rem; border-radius: 0.6rem;">
+        ↺ Reset Demo Memory
+      </button>
+      <a href="{% url 'dashboard' %}" class="button" style="font-size: 0.82rem; padding: 0.45rem 0.95rem; border-radius: 0.6rem;">
+        Go to B2B Dashboard →
+      </a>
+    </div>
+  </div>
+
+  {# ── Customer Profile Card ── #}
+  <div class="card" style="padding: 1rem 1.25rem; border-radius: 1rem; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 1px solid #bae6fd; margin-bottom: 1.5rem;">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; align-items: center;">
+      <div>
+        <div style="font-size: 0.72rem; color: #0369a1; font-weight: 700; text-transform: uppercase;">Controlled Demo Customer</div>
+        <div style="font-weight: 800; font-size: 1.05rem; color: #0c4a6e;">{{ demo_company }}</div>
+      </div>
+      <div>
+        <div style="font-size: 0.72rem; color: #0369a1; font-weight: 700; text-transform: uppercase;">Buyer ID (Hindsight Namespace)</div>
+        <div style="font-weight: 800; font-size: 1.05rem; color: #0284c7; font-family: monospace;">{{ demo_buyer_id }}</div>
+      </div>
+      <div>
+        <div style="font-size: 0.72rem; color: #0369a1; font-weight: 700; text-transform: uppercase;">Hindsight Memory Bank</div>
+        <div style="font-weight: 700; font-size: 0.95rem; color: #0369a1; font-family: monospace;">cheersthepure-b2b</div>
+      </div>
+    </div>
+  </div>
+
+  {# ── Guided 2-Session Workflow Steps ── #}
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+    
+    {# Step 1 #}
+    <div class="demo-step-card" id="card-step-1">
+      <div class="demo-step-header">
+        <span class="demo-step-num">Step 1: Session 1 (Create Memory)</span>
+        <span id="badge-step-1" style="font-size: 0.72rem; font-weight: 700; color: #64748b;">Ready</span>
+      </div>
+      <div class="demo-prompt-box">
+        "We usually need delivery after 4 PM because our shop is busy before that."
+      </div>
+      <button type="button" id="btn-run-step-1" class="button" style="width: 100%; font-size: 0.85rem; padding: 0.55rem 1rem; border-radius: 0.5rem; justify-content: center;">
+        ▶ Execute Session 1
+      </button>
+    </div>
+
+    {# Session Switcher Button #}
+    <div class="demo-step-card" id="card-step-divider" style="border-style: dashed; border-color: #6366f1; background: #faf5ff;">
+      <div class="demo-step-header">
+        <span class="demo-step-num" style="color: #7c3aed;">Session Transition</span>
+        <span id="badge-session-state" style="font-size: 0.72rem; font-weight: 700; color: #7c3aed;">Session 1 Active</span>
+      </div>
+      <p style="font-size: 0.82rem; color: #4b5563; margin-top: 0; margin-bottom: 0.75rem;">
+        Creates a new conversation session ID. Persistent Hindsight memory is <strong>preserved</strong>.
+      </p>
+      <button type="button" id="btn-start-new-session" class="button" style="width: 100%; background: linear-gradient(135deg, #7c3aed, #4f46e5); color: white; font-size: 0.85rem; padding: 0.55rem 1rem; border-radius: 0.5rem; justify-content: center;">
+        ✨ Start New Session
+      </button>
+    </div>
+
+    {# Step 2 #}
+    <div class="demo-step-card" id="card-step-2">
+      <div class="demo-step-header">
+        <span class="demo-step-num">Step 2: Session 2 (Recall Memory)</span>
+        <span id="badge-step-2" style="font-size: 0.72rem; font-weight: 700; color: #64748b;">Awaiting New Session</span>
+      </div>
+      <div class="demo-prompt-box">
+        "I need 150 cases this time."
+      </div>
+      <button type="button" id="btn-run-step-2" class="button button-secondary" style="width: 100%; font-size: 0.85rem; padding: 0.55rem 1rem; border-radius: 0.5rem; justify-content: center;" disabled>
+        ▶ Execute Session 2
+      </button>
+    </div>
+
+  </div>
+
+  {# ── Main Workspace Grid: Chat Console + Technical Inspection Panel ── #}
+  <div class="demo-grid">
+
+    {# Left Column: Interactive Chat Stream #}
+    <div class="demo-chat-box">
+      <div class="dai-header">
+        <div class="dai-header-main">
+          <div class="dai-avatar">🤖</div>
+          <div class="dai-header-title-wrap">
+            <h3>DispatchAI Console</h3>
+            <div class="dai-header-desc">Testing as {{ demo_company }} ({{ demo_buyer_id }})</div>
+          </div>
+        </div>
+        <div class="dai-header-actions">
+          <span class="dai-online-badge">Hindsight Active</span>
+        </div>
+      </div>
+
+      <div class="demo-chat-messages" id="demo-chat-messages">
+        <div class="demo-session-divider" id="session-1-divider">
+          🔵 SESSION 1 — Session ID: <span id="lbl-session-1-id">{{ initial_session_id }}</span>
+        </div>
+        <div class="dai-msg-row dai-msg-assistant">
+          <div class="dai-msg-avatar">🤖</div>
+          <div class="dai-msg-body">
+            <div class="dai-bubble">
+              👋 Hello! I am DispatchAI, your B2B supply assistant for <strong>Cheers the Pure</strong>. How can I assist Sri Balaji Supermarket today?
+            </div>
+            <div class="dai-msg-time">DispatchAI • Just now</div>
+          </div>
+        </div>
+      </div>
+
+      {# Custom Message Input Area #}
+      <div class="dai-input-area">
+        {% csrf_token %}
+        <div class="dai-input-wrapper">
+          <textarea
+            class="dai-input"
+            id="demo-custom-input"
+            placeholder="Type a custom message or click the guided step buttons above..."
+            rows="1"
+          ></textarea>
+        </div>
+        <button type="button" id="demo-send-btn" class="dai-send-btn" title="Send custom message">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    {# Right Column: Technical Inspection Panel #}
+    <div class="tech-panel">
+      <div class="tech-panel-header">
+        <div class="tech-panel-title">
+          <span>🔬</span> Live Evaluation Telemetry
+        </div>
+        <span style="font-size: 0.72rem; color: #38bdf8; background: rgba(56,189,248,0.1); padding: 0.2rem 0.5rem; border-radius: 0.35rem; font-family: monospace;">
+          Real-time
+        </span>
+      </div>
+
+      {# 1. Buyer ID #}
+      <div class="tech-item">
+        <div class="tech-label">
+          <span>Buyer ID</span>
+          <span style="color: #4ade80;">Authenticated</span>
+        </div>
+        <div class="tech-value" id="tech-buyer-id">{{ demo_buyer_id }}</div>
+      </div>
+
+      {# 2. Active Session ID #}
+      <div class="tech-item">
+        <div class="tech-label">
+          <span>Active Session ID</span>
+          <span id="tech-session-num-label" style="color: #38bdf8;">Session 1</span>
+        </div>
+        <div class="tech-value" id="tech-session-id">{{ initial_session_id }}</div>
+      </div>
+
+      {# 3. Memory Recalled #}
+      <div class="tech-item">
+        <div class="tech-label">
+          <span>Memory Recalled from Hindsight</span>
+          <span id="tech-recalled-count" style="color: #c084fc;">0 recalled</span>
+        </div>
+        <div id="tech-memory-recalled-box">
+          <em style="color: #64748b; font-size: 0.8rem;">(None recalled for this turn)</em>
+        </div>
+      </div>
+
+      {# 4. Memory Retained #}
+      <div class="tech-item">
+        <div class="tech-label">
+          <span>Memory Retained into Hindsight</span>
+          <span id="tech-retained-count" style="color: #4ade80;">0 items</span>
+        </div>
+        <div id="tech-memory-retained-box">
+          <em style="color: #64748b; font-size: 0.8rem;">(No new memory retained yet)</em>
+        </div>
+      </div>
+
+      {# 5. Database Data Used #}
+      <div class="tech-item">
+        <div class="tech-label">
+          <span>Database Data Used</span>
+          <span style="color: #38bdf8;">SQL Authoritative</span>
+        </div>
+        <div id="tech-database-box">
+          <ul class="tech-list" id="tech-database-list">
+            <li>Cheers the Pure Authoritative Database Catalog</li>
+            <li>Active B2B Pricing Rules</li>
+          </ul>
+        </div>
+      </div>
+
+      {# Security Note #}
+      <div style="font-size: 0.72rem; color: #64748b; text-align: center; margin-top: auto; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 0.75rem;">
+        🔒 Zero-leakage verified: API keys and raw prompt tokens are not exposed.
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+{# ── Demo Controller JavaScript ── #}
+<script>
+  let activeSessionId = "{{ initial_session_id }}";
+  let activeSessionNumber = 1;
+  const buyerId = "{{ demo_buyer_id }}";
+
+  function getCsrfToken() {
+    const input = document.querySelector('input[name="csrfmiddlewaretoken"]');
+    return input ? input.value : '';
+  }
+
+  function appendUserBubble(text) {
+    const box = document.getElementById('demo-chat-messages');
+    const row = document.createElement('div');
+    row.className = 'dai-msg-row dai-msg-user';
+    row.innerHTML = `
+      <div class="dai-msg-avatar">👤</div>
+      <div class="dai-msg-body">
+        <div class="dai-bubble">${text}</div>
+        <div class="dai-msg-time">Sri Balaji Supermarket • Just now</div>
+      </div>
+    `;
+    box.appendChild(row);
+    box.scrollTop = box.scrollHeight;
+  }
+
+  function appendAgentBubble(reply, sessionNum, isMemoryCreated, isMemoryRecalled) {
+    const box = document.getElementById('demo-chat-messages');
+    const row = document.createElement('div');
+    row.className = 'dai-msg-row dai-msg-assistant';
+
+    let badgeHtml = '';
+    if (sessionNum === 1 && isMemoryCreated) {
+      badgeHtml += `
+        <div class="session-badge-created">
+          <span>✨</span>
+          <strong>SESSION 1</strong>: Memory created (Saved to Hindsight: cheersthepure-b2b)
+        </div>
+      `;
+    }
+    if (sessionNum === 2 && isMemoryRecalled) {
+      badgeHtml += `
+        <div class="session-badge-recalled">
+          <span>🧠</span>
+          <strong>SESSION 2</strong>: Memory recalled (Retrieved delivery constraint from Hindsight)
+        </div>
+      `;
+    }
+
+    row.innerHTML = `
+      <div class="dai-msg-avatar">🤖</div>
+      <div class="dai-msg-body">
+        <div class="dai-bubble">${reply}</div>
+        ${badgeHtml}
+        <div class="dai-msg-time">DispatchAI • Just now</div>
+      </div>
+    `;
+    box.appendChild(row);
+    box.scrollTop = box.scrollHeight;
+  }
+
+  function updateTechPanel(data) {
+    document.getElementById('tech-buyer-id').textContent = data.buyer_id || buyerId;
+    document.getElementById('tech-session-id').textContent = data.session_id || activeSessionId;
+    document.getElementById('tech-session-num-label').textContent = `Session ${activeSessionNumber}`;
+
+    // Memory Recalled
+    const recalledBox = document.getElementById('tech-memory-recalled-box');
+    const recalledCount = document.getElementById('tech-recalled-count');
+    const recalled = data.memory_recalled || [];
+    recalledCount.textContent = `${recalled.length} recalled`;
+    if (recalled.length > 0) {
+      let listHtml = '<ul class="tech-list">';
+      recalled.forEach(m => {
+        listHtml += `<li><strong>[${m.category || 'logistics'}]</strong>: ${m.content}</li>`;
+      });
+      listHtml += '</ul>';
+      recalledBox.innerHTML = listHtml;
+    } else {
+      recalledBox.innerHTML = '<em style="color: #64748b; font-size: 0.8rem;">(None recalled for this turn)</em>';
+    }
+
+    // Memory Retained
+    const retainedBox = document.getElementById('tech-memory-retained-box');
+    const retainedCount = document.getElementById('tech-retained-count');
+    const retained = data.memory_retained || [];
+    retainedCount.textContent = `${retained.length} total stored`;
+    if (retained.length > 0) {
+      let listHtml = '<ul class="tech-list">';
+      retained.forEach(m => {
+        listHtml += `<li><strong>[${m.category || 'delivery'}]</strong>: ${m.content}</li>`;
+      });
+      listHtml += '</ul>';
+      retainedBox.innerHTML = listHtml;
+    } else {
+      retainedBox.innerHTML = '<em style="color: #64748b; font-size: 0.8rem;">(No new memory retained yet)</em>';
+    }
+
+    // Database Sources
+    const dbList = document.getElementById('tech-database-list');
+    const sources = data.database_used || ['Cheers the Pure Database Catalog'];
+    dbList.innerHTML = sources.map(s => `<li>${s}</li>`).join('');
+  }
+
+  async function sendTurn(text, stepNum = 1) {
+    appendUserBubble(text);
+
+    try {
+      const response = await fetch('/api/demo/memory/chat/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCsrfToken(),
+        },
+        body: JSON.stringify({
+          message: text,
+          session_id: activeSessionId,
+          session_number: activeSessionNumber,
+        }),
+      });
+
+      const data = await response.json();
+      activeSessionId = data.session_id || activeSessionId;
+
+      appendAgentBubble(
+        data.reply,
+        activeSessionNumber,
+        data.memory_created,
+        data.memory_used || (data.memory_recalled && data.memory_recalled.length > 0)
+      );
+
+      updateTechPanel(data);
+
+      if (stepNum === 1) {
+        document.getElementById('badge-step-1').innerHTML = '<span style="color:#10b981;">✓ Executed</span>';
+        document.getElementById('btn-run-step-1').disabled = true;
+        document.getElementById('btn-start-new-session').style.transform = 'scale(1.03)';
+      } else if (stepNum === 2) {
+        document.getElementById('badge-step-2').innerHTML = '<span style="color:#10b981;">✓ Executed</span>';
+        document.getElementById('btn-run-step-2').disabled = true;
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error sending demo turn. Check server logs.');
+    }
+  }
+
+  // ── Step 1 Button ──
+  document.getElementById('btn-run-step-1').addEventListener('click', () => {
+    const msg = "We usually need delivery after 4 PM because our shop is busy before that.";
+    sendTurn(msg, 1);
+  });
+
+  // ── "Start New Session" Button ──
+  document.getElementById('btn-start-new-session').addEventListener('click', () => {
+    activeSessionNumber = 2;
+    activeSessionId = `sess_balaji_02_${Date.now().toString().slice(-6)}`;
+    
+    // Add divider in chat stream
+    const box = document.getElementById('demo-chat-messages');
+    const divider = document.createElement('div');
+    divider.className = 'demo-session-divider';
+    divider.style.color = '#7c3aed';
+    divider.innerHTML = `🟣 SESSION 2 — Session ID: ${activeSessionId} (Hindsight Memory Intact)`;
+    box.appendChild(divider);
+    box.scrollTop = box.scrollHeight;
+
+    // Update UI states
+    document.getElementById('badge-session-state').textContent = 'Session 2 Active';
+    document.getElementById('tech-session-id').textContent = activeSessionId;
+    document.getElementById('tech-session-num-label').textContent = 'Session 2';
+    document.getElementById('badge-step-2').textContent = 'Ready';
+    document.getElementById('badge-step-2').style.color = '#7c3aed';
+    
+    const step2Btn = document.getElementById('btn-run-step-2');
+    step2Btn.disabled = false;
+    step2Btn.className = 'button';
+    step2Btn.style.background = '#0284c7';
+    step2Btn.style.color = 'white';
+
+    document.getElementById('btn-start-new-session').disabled = true;
+    document.getElementById('btn-start-new-session').textContent = '✓ Session 2 Started';
+  });
+
+  // ── Step 2 Button ──
+  document.getElementById('btn-run-step-2').addEventListener('click', () => {
+    const msg = "I need 150 cases this time.";
+    sendTurn(msg, 2);
+  });
+
+  // ── Custom Message Send ──
+  document.getElementById('demo-send-btn').addEventListener('click', () => {
+    const input = document.getElementById('demo-custom-input');
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = '';
+    sendTurn(text, 0);
+  });
+
+  document.getElementById('demo-custom-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      document.getElementById('demo-send-btn').click();
+    }
+  });
+
+  // ── Reset Demo Button ──
+  document.getElementById('btn-reset-demo').addEventListener('click', async () => {
+    if (!confirm('Reset memory and conversation history for Sri Balaji Supermarket?')) return;
+    try {
+      const res = await fetch('/api/demo/memory/reset/', {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCsrfToken() },
+      });
+      const data = await res.json();
+      if (data.success) {
+        window.location.reload();
+      }
+    } catch (err) {
+      console.error(err);
+      window.location.reload();
+    }
+  });
+</script>
+{% endblock %}

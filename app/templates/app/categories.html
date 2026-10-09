@@ -1,0 +1,23 @@
+{% extends 'app/base.html' %}
+
+{% block title %}Categories - CheersThePure{% endblock %}
+
+{% block content %}
+<section class="section">
+    <div class="section-header">
+        <h1>Product Categories</h1>
+        <p>Browse categories and discover the right bottle types for your needs.</p>
+    </div>
+    <div class="category-grid">
+        {% for category in categories %}
+            <article class="category-card">
+                <h2>{{ category.name }}</h2>
+                <p>{{ category.description }}</p>
+                <a class="button button-secondary" href="{% url 'category_detail' category.pk %}">See products</a>
+            </article>
+        {% empty %}
+            <p>No categories have been added yet. Add some in the admin panel.</p>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

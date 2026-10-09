@@ -1,0 +1,149 @@
+{% extends 'app/base.html' %}
+{% load static %}
+
+{% block title %}Login — Cheers the Pure Water{% endblock %}
+{% block meta_description %}Sign in to your Cheers the Pure Water account using your email address or mobile number.{% endblock %}
+
+{% block content %}
+<section class="section auth-section centered-form" style="max-width: 480px; margin: 2.5rem auto;">
+
+  <!-- Header -->
+  <div class="section-header center-text" style="margin-bottom: 2rem;">
+    <div style="font-size: 3rem; margin-bottom: 0.75rem;">💧</div>
+    <h1 style="font-size: 1.9rem; font-weight: 800; margin: 0 0 0.4rem;
+                background: linear-gradient(135deg, #0c1a40, #0ea5e9);
+                -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+      Welcome Back
+    </h1>
+    <p style="color: #475569; margin: 0; font-size: 0.95rem;">
+      Sign in using your <strong>email</strong> or <strong>mobile number</strong>
+    </p>
+  </div>
+
+  <!-- Error Banner -->
+  {% if error_message %}
+    <div class="alert alert-error" role="alert">
+      <strong>Login failed:</strong> {{ error_message }}
+    </div>
+  {% elif form.non_field_errors %}
+    <div class="alert alert-error" role="alert">
+      <strong>Login failed:</strong> {{ form.non_field_errors.0 }}
+    </div>
+  {% endif %}
+
+  <!-- Login Form -->
+  <form method="post" id="login-form" novalidate>
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ next }}" />
+
+    <!-- Email or Mobile field -->
+    <div class="form-group" style="margin-bottom: 1.25rem;">
+      <label for="id_login_credential" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: #0f172a;">
+        Email Address or Mobile Number
+      </label>
+      <input
+        type="text"
+        name="username"
+        id="id_login_credential"
+        class="form-input"
+        placeholder="your@email.com  ·  or  ·  +91 9876543210"
+        value="{{ form.username.value|default:'' }}"
+        autocomplete="username"
+        required
+        autofocus
+      />
+      {% if form.username.errors %}
+        <span style="color: #ef4444; font-size: 0.82rem; display: block; margin-top: 0.3rem;">
+          {{ form.username.errors.0 }}
+        </span>
+      {% endif %}
+    </div>
+
+    <!-- Password field -->
+    <div class="form-group" style="margin-bottom: 1.5rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+        <label for="id_login_password" style="font-weight: 600; color: #0f172a;">Password</label>
+        <a href="{% url 'password_reset' %}"
+           style="font-size: 0.82rem; color: #0ea5e9; text-decoration: none; font-weight: 500;"
+           id="forgot-password-link">
+          Forgot password?
+        </a>
+      </div>
+      <input
+        type="password"
+        name="password"
+        id="id_login_password"
+        class="form-input"
+        placeholder="Enter your password"
+        autocomplete="current-password"
+        required
+      />
+      {% if form.password.errors %}
+        <span style="color: #ef4444; font-size: 0.82rem; display: block; margin-top: 0.3rem;">
+          {{ form.password.errors.0 }}
+        </span>
+      {% endif %}
+    </div>
+
+    <!-- Submit -->
+    <button type="submit" class="button" id="login-submit-btn" style="width: 100%; font-size: 1rem; padding: 1rem;">
+      🔐 Sign In
+    </button>
+  </form>
+
+  <!-- Divider -->
+  <div style="display: flex; align-items: center; gap: 0.75rem; margin: 1.5rem 0;">
+    <div style="flex: 1; height: 1px; background: rgba(255,255,255,0.35);"></div>
+    <span style="font-size: 0.8rem; color: #94a3b8; font-weight: 500;">No account yet?</span>
+    <div style="flex: 1; height: 1px; background: rgba(255,255,255,0.35);"></div>
+  </div>
+
+  <!-- Register link -->
+  <a href="{% url 'register' %}"
+     class="button button-secondary"
+     id="go-to-register-btn"
+     style="width: 100%; text-align: center; padding: 0.9rem; font-size: 0.95rem;">
+    ✨ Create Free Account
+  </a>
+
+  <!-- Admin hint (subtle, always visible) -->
+  <p style="text-align: center; margin-top: 1.5rem; font-size: 0.77rem; color: rgba(255,255,255,0.35);">
+    Administrator? Login with your registered credentials.
+  </p>
+
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function () {
+  'use strict';
+
+  // Auto-detect input type and show subtle hint
+  const input = document.getElementById('id_login_credential');
+  const btn   = document.getElementById('login-submit-btn');
+
+  if (input) {
+    input.addEventListener('input', function () {
+      const v = input.value.trim();
+      const isMobile = /^\+?[\d\s\-]{7,}$/.test(v);
+      if (isMobile) {
+        input.style.borderColor = 'rgba(14, 165, 233, 0.5)';
+      } else if (v.includes('@')) {
+        input.style.borderColor = 'rgba(14, 165, 233, 0.5)';
+      } else {
+        input.style.borderColor = '';
+      }
+    });
+  }
+
+  // Prevent double-submit
+  if (btn) {
+    document.getElementById('login-form').addEventListener('submit', function () {
+      btn.disabled = true;
+      btn.textContent = '⏳ Signing in…';
+    });
+  }
+})();
+</script>
+{% endblock %}

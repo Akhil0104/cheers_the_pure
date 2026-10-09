@@ -1,0 +1,32 @@
+{% extends 'app/base.html' %}
+
+{% block title %}Access Restricted - CheersThePure{% endblock %}
+
+{% block content %}
+<section class="section">
+    <div class="section-header">
+        <h1>Access Restricted</h1>
+        <p>This page is not available for your account type.</p>
+    </div>
+    <div class="card" style="max-width: 560px; margin: 0 auto; padding: 2rem;">
+        {% if account_type == 'b2b' %}
+            <p>Your <strong>corporate B2B account</strong> gives you access to bulk quote requests and admin proposals — not retail checkout.</p>
+            <ul style="margin: 1rem 0;">
+                <li>Request bulk quotes from product pages</li>
+                <li>Track quote replies in your dashboard</li>
+            </ul>
+            <a class="button" href="{% url 'dashboard' %}">Go to B2B Dashboard</a>
+            <a class="button button-secondary" href="{% url 'products' %}">Browse Products</a>
+        {% else %}
+            <p>Your <strong>retail B2C account</strong> gives you access to shop, cart, checkout, and order tracking — not bulk quote workflows.</p>
+            <ul style="margin: 1rem 0;">
+                <li>Shop products and add to cart</li>
+                <li>Checkout, pay, and download invoices</li>
+                <li>Track orders in real time</li>
+            </ul>
+            <a class="button" href="{% url 'products' %}">Shop Products</a>
+            <a class="button button-secondary" href="{% url 'view_cart' %}">View Cart</a>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

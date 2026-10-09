@@ -1,0 +1,133 @@
+{% extends 'app/base.html' %}
+
+{% block title %}Complete Payment - Cheers the Pure Water{% endblock %}
+
+{% block content %}
+<section class="section">
+    <div class="section-header text-center mb-5">
+        <h1 class="display-4 fw-bold">Select Payment Method</h1>
+        <p class="text-muted">Order #{{ order.order_number }} • Secure Mock Checkout</p>
+    </div>
+
+    <div class="row gap-4 justify-content-center">
+        <div class="col-lg-8">
+            <div class="glass-card p-4 p-md-5 h-100">
+                <form method="post" id="payment-form">
+                    {% csrf_token %}
+                    
+                    <div class="accordion" id="paymentAccordion">
+                        
+                        <!-- Credit/Debit Card Option -->
+                        <div class="accordion-item bg-transparent border-0 mb-3">
+                            <h2 class="accordion-header" id="headingCard">
+                                <button class="accordion-button bg-white bg-opacity-50 glass-card text-dark fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCard" aria-expanded="true" aria-controls="collapseCard" style="border-radius: var(--radius-md);">
+                                    <i class="fas fa-credit-card text-primary me-3"></i> Credit / Debit Card
+                                </button>
+                            </h2>
+                            <div id="collapseCard" class="accordion-collapse collapse show" aria-labelledby="headingCard" data-bs-parent="#paymentAccordion">
+                                <div class="accordion-body px-0 pt-3">
+                                    <div class="card border-0 bg-white bg-opacity-25 p-4" style="border-radius: var(--radius-md);">
+                                        <div class="mb-3">
+                                            <label class="form-label text-muted small fw-bold text-uppercase">Card Number</label>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control bg-white bg-opacity-75 border-0" value="4242 4242 4242 4242" readonly style="padding: 0.75rem;" />
+                                                <span class="input-group-text bg-white bg-opacity-75 border-0 text-muted"><i class="fab fa-cc-visa fa-lg"></i></span>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <label class="form-label text-muted small fw-bold text-uppercase">Expiry</label>
+                                                <input type="text" class="form-control bg-white bg-opacity-75 border-0" value="12/28" readonly style="padding: 0.75rem;" />
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label text-muted small fw-bold text-uppercase">CVV</label>
+                                                <input type="text" class="form-control bg-white bg-opacity-75 border-0" value="***" readonly style="padding: 0.75rem;" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- UPI Option -->
+                        <div class="accordion-item bg-transparent border-0 mb-3">
+                            <h2 class="accordion-header" id="headingUPI">
+                                <button class="accordion-button collapsed bg-white bg-opacity-50 glass-card text-dark fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseUPI" aria-expanded="false" aria-controls="collapseUPI" style="border-radius: var(--radius-md);">
+                                    <i class="fas fa-mobile-alt text-success me-3"></i> UPI (GPay, PhonePe, Paytm)
+                                </button>
+                            </h2>
+                            <div id="collapseUPI" class="accordion-collapse collapse" aria-labelledby="headingUPI" data-bs-parent="#paymentAccordion">
+                                <div class="accordion-body px-0 pt-3">
+                                    <div class="card border-0 bg-white bg-opacity-25 p-4" style="border-radius: var(--radius-md);">
+                                        <div class="d-flex justify-content-center gap-4 mb-4 text-muted">
+                                            <div class="text-center">
+                                                <div class="bg-white rounded-circle shadow-sm p-2 mb-2 mx-auto" style="width: 48px; height: 48px; display:flex; align-items:center; justify-content:center;">
+                                                    <img src="https://upload.wikimedia.org/wikipedia/commons/f/f2/Google_Pay_Logo.svg" alt="GPay" style="height: 24px;" onerror="this.src=''; this.alt='GPay';">
+                                                </div>
+                                                <small>GPay</small>
+                                            </div>
+                                            <div class="text-center">
+                                                <div class="bg-white rounded-circle shadow-sm p-2 mb-2 mx-auto" style="width: 48px; height: 48px; display:flex; align-items:center; justify-content:center;">
+                                                    <strong class="text-purple" style="color: #673ab7; font-size:1.2rem;">पे</strong>
+                                                </div>
+                                                <small>PhonePe</small>
+                                            </div>
+                                        </div>
+                                        <label class="form-label text-muted small fw-bold text-uppercase">UPI ID</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control bg-white bg-opacity-75 border-0" value="user@okhdfcbank" readonly style="padding: 0.75rem;" />
+                                            <button type="button" class="btn btn-primary px-4" disabled>Verify</button>
+                                        </div>
+                                        <small class="text-success mt-2 d-block"><i class="fas fa-check-circle"></i> Verified successfully</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bank Transfer Option -->
+                        <div class="accordion-item bg-transparent border-0 mb-3">
+                            <h2 class="accordion-header" id="headingBank">
+                                <button class="accordion-button collapsed bg-white bg-opacity-50 glass-card text-dark fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapseBank" aria-expanded="false" aria-controls="collapseBank" style="border-radius: var(--radius-md);">
+                                    <i class="fas fa-university text-info me-3"></i> Net Banking
+                                </button>
+                            </h2>
+                            <div id="collapseBank" class="accordion-collapse collapse" aria-labelledby="headingBank" data-bs-parent="#paymentAccordion">
+                                <div class="accordion-body px-0 pt-3">
+                                    <div class="card border-0 bg-white bg-opacity-25 p-4" style="border-radius: var(--radius-md);">
+                                        <label class="form-label text-muted small fw-bold text-uppercase">Select Bank</label>
+                                        <select class="form-select bg-white bg-opacity-75 border-0" style="padding: 0.75rem;">
+                                            <option>HDFC Bank</option>
+                                            <option>State Bank of India</option>
+                                            <option>ICICI Bank</option>
+                                            <option>Axis Bank</option>
+                                            <option>Kotak Mahindra Bank</option>
+                                        </select>
+                                        <div class="mt-3 text-muted small">
+                                            You will be redirected to your bank's secure portal to complete the payment.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="mt-5">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <span class="fs-5 text-muted">Amount to pay:</span>
+                            <span class="display-6 fw-bold text-primary">₹{{ order.total_amount }}</span>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 py-3 fw-bold shadow-sm" style="border-radius: var(--radius-xl); background: linear-gradient(135deg, var(--wave-aqua), var(--indigo)); border: none; font-size: 1.2rem;">
+                            <i class="fas fa-lock me-2"></i> Pay ₹{{ order.total_amount }} Securely
+                        </button>
+                        <div class="text-center mt-3 text-muted small">
+                            This is a mock payment gateway for development purposes. No real transaction will occur.
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

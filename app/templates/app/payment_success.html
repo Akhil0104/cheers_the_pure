@@ -1,0 +1,160 @@
+{% extends 'app/base.html' %}
+
+{% block title %}Payment Successful - Cheers the Pure Water{% endblock %}
+
+{% block content %}
+<section class="section animate-fade-up">
+    <!-- Success Header -->
+    <div class="text-center mb-5 animate-fade-up">
+        <div class="mb-3" style="font-size:4rem;">🎉</div>
+        <h1 class="display-4 fw-bold text-success">Payment Successful!</h1>
+        <p class="text-muted fs-5">Thank you for your order. Your Cheers the Pure Water is on the way.</p>
+    </div>
+
+    <div class="row justify-content-center gap-4">
+        <div class="col-lg-7">
+
+            <!-- ── Order Details Card ── -->
+            <div class="glass-card fancy-box p-4 mb-4 animate-fade-up animate-fade-up-delay-1">
+                <h5 class="fw-bold mb-4 text-primary"><i class="fas fa-receipt me-2"></i> Order Confirmation</h5>
+                <div class="row g-3">
+                    <div class="col-6">
+                        <small class="text-muted d-block">Customer Name</small>
+                        <strong>
+                            {% if is_order %}{{ order.shipping_name|default:order.user.username }}{% else %}{{ quote_request.name }}{% endif %}
+                        </strong>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted d-block">Email</small>
+                        <strong>
+                            {% if is_order %}{{ order.shipping_email|default:order.user.email }}{% else %}{{ quote_request.email }}{% endif %}
+                        </strong>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted d-block">Order Number</small>
+                        <strong>{% if is_order %}#{{ order.order_number }}{% else %}Quote #{{ quote_request.id }}{% endif %}</strong>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted d-block">Order Date</small>
+                        <strong>{% if is_order %}{{ order.created_at|date:"M d, Y" }}{% else %}{{ quote_request.created_at|date:"M d, Y" }}{% endif %}</strong>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted d-block">Items</small>
+                        <strong>
+                            {% if is_order %}{{ order.items.count }} item(s){% elif quote_request.product %}{{ quote_request.product.name }}{% else %}Custom Order{% endif %}
+                        </strong>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted d-block">Transaction ID</small>
+                        <strong style="font-size:0.85rem;">
+                            {% if is_order %}{{ payment.transaction_id|default:"—" }}{% else %}{{ session.payment_intent|default:"—" }}{% endif %}
+                        </strong>
+                    </div>
+                </div>
+
+                <!-- Payment Breakdown -->
+                <hr class="my-4" />
+                <div class="d-flex justify-content-between mb-2 text-muted small">
+                    <span>Subtotal</span>
+                    <span>₹{% if is_order %}{{ order.total_amount|floatformat:2 }}{% else %}{{ session.amount_total|default:"0" }}{% endif %}</span>
+                </div>
+                {% if is_order and order.delivery_fee %}
+                <div class="d-flex justify-content-between mb-2 text-muted small">
+                    <span>Delivery Fee {% if order.delivery_distance_km %}({{ order.delivery_distance_km|floatformat:1 }} km){% endif %}</span>
+                    <span>₹{{ order.delivery_fee|floatformat:2 }}</span>
+                </div>
+                {% endif %}
+                <div class="d-flex justify-content-between fw-bold fs-5 mt-2">
+                    <span>Total Paid Now</span>
+                    <span class="text-success">₹{% if is_order %}{{ order.advance_paid|floatformat:2 }}{% else %}{{ session.amount_total|default:"0" }}{% endif %}</span>
+                </div>
+                {% if is_order and is_cod %}
+                <div class="d-flex justify-content-between fw-bold text-warning mt-1">
+                    <span>Balance at Delivery (70%)</span>
+                    <span>₹{{ order.balance_due|floatformat:2 }}</span>
+                </div>
+                {% endif %}
+
+                <div class="mt-3">
+                    <span class="badge bg-success px-3 py-2">
+                        <i class="fas fa-check-circle me-1"></i>
+                        {% if is_order and is_cod %}30% Advance Confirmed{% else %}Payment Confirmed{% endif %}
+                    </span>
+                </div>
+            </div>
+
+            <!-- ── COD Balance Due Info ── -->
+            {% if is_order and is_cod %}
+            <div class="glass-card fancy-box p-4 mb-4 animate-fade-up animate-fade-up-delay-2" style="border-left: 4px solid #f59e0b !important; background: rgba(245,158,11,0.07) !important;">
+                <h5 class="fw-bold mb-3" style="color:#b45309;"><i class="fas fa-truck me-2"></i> Cash on Delivery — Balance Payment</h5>
+                <p class="text-muted mb-3">
+                    Your 30% advance of <strong>₹{{ order.advance_paid|floatformat:2 }}</strong> has been received. The remaining balance must be paid at the time of delivery.
+                </p>
+                <div class="d-flex justify-content-between fw-bold p-3 rounded" style="background:rgba(245,158,11,0.15);border-radius:var(--radius-sm);">
+                    <span style="color:#92400e;">💵 Amount Due at Delivery</span>
+                    <span class="fs-5" style="color:#b45309;">₹{{ order.balance_due|floatformat:2 }}</span>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- ── Bank Settlement Details Card ── -->
+            {% if bank %}
+            <div class="glass-card fancy-box p-4 mb-4 animate-fade-up animate-fade-up-delay-3" style="border-left: 4px solid var(--accent) !important; background: rgba(14,165,233,0.06) !important;">
+                <h5 class="fw-bold mb-4 text-primary"><i class="fas fa-university me-2"></i> Bank Settlement Reference</h5>
+                <p class="text-muted small mb-3">
+                    For wire transfer, UPI, or NEFT payments, use the following official bank details of Cheers the Pure Water:
+                </p>
+                <div class="row g-3">
+                    <div class="col-6">
+                        <small class="text-muted d-block text-uppercase fw-bold" style="font-size:0.7rem;">Account Holder</small>
+                        <strong>{{ bank.holder }}</strong>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted d-block text-uppercase fw-bold" style="font-size:0.7rem;">Bank</small>
+                        <strong>{{ bank.bank_name }}</strong>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted d-block text-uppercase fw-bold" style="font-size:0.7rem;">Account Number</small>
+                        <strong class="font-monospace" style="letter-spacing:0.08em;">{{ bank.account_number }}</strong>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted d-block text-uppercase fw-bold" style="font-size:0.7rem;">IFSC Code</small>
+                        <strong class="font-monospace" style="letter-spacing:0.08em; color: var(--accent);">{{ bank.ifsc }}</strong>
+                    </div>
+                </div>
+                <div class="mt-3 p-2 rounded text-center" style="background:rgba(14,165,233,0.1);border:1px dashed rgba(14,165,233,0.4);font-size:0.82rem;color:var(--muted);">
+                    Use Order #{% if is_order %}{{ order.order_number }}{% endif %} as payment reference / remarks.
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- ── Next Steps & Actions ── -->
+            <div class="glass-card fancy-box p-4 animate-fade-up animate-fade-up-delay-3">
+                <p class="text-muted mb-4"><strong>What's next?</strong> We will process your order and contact you shortly with delivery details. A confirmation email has been sent to <strong>{% if is_order %}{{ order.shipping_email|default:order.user.email }}{% else %}{{ quote_request.email }}{% endif %}</strong>.</p>
+                <div class="d-flex gap-3 flex-wrap">
+                    <a href="{% url 'index' %}" class="btn btn-light px-4 py-2 border" style="border-radius:var(--radius-xl);">
+                        <i class="fas fa-home me-2"></i> Home
+                    </a>
+                    {% if is_order %}
+                        <a href="{% url 'order_details' order_id=order.id %}" class="btn btn-primary px-4 py-2 fw-bold" style="border-radius:var(--radius-xl);background:linear-gradient(135deg,var(--wave-aqua),var(--indigo));border:none;">
+                            <i class="fas fa-box me-2"></i> View Order Status
+                        </a>
+                        {% if invoice_url %}
+                        <a href="{{ invoice_url }}" class="btn btn-outline-primary px-4 py-2" style="border-radius:var(--radius-xl);" target="_blank">
+                            <i class="fas fa-file-invoice me-2"></i> Download Invoice
+                        </a>
+                        {% endif %}
+                    {% else %}
+                        {% if quote_request and quote_request.verification_token %}
+                        <a href="{% url 'view_quote_status' token=quote_request.verification_token.token %}" class="btn btn-primary px-4 py-2 fw-bold" style="border-radius:var(--radius-xl);">
+                            View Order Status
+                        </a>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+{% endblock %}

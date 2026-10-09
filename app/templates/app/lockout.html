@@ -1,0 +1,26 @@
+{% extends 'app/base.html' %}
+
+{% block title %}Account Locked - Cheers the Pure Water{% endblock %}
+
+{% block content %}
+<section class="section centered-form" style="max-width: 480px; margin: 4rem auto; text-align: center;">
+  <div class="card" style="padding: 3rem 2rem; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); background: white;">
+    <div style="font-size: 4rem; margin-bottom: 1.5rem;">🔒</div>
+    <h1 style="font-size: 2rem; font-weight: 800; margin: 0 0 1rem;
+                background: linear-gradient(135deg, #ef4444, #b91c1c);
+                -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+      Account Locked
+    </h1>
+    <p style="color: #475569; font-size: 1.05rem; line-height: 1.6; margin-bottom: 2rem;">
+      Too many failed login attempts have been detected from your IP address. 
+      To protect account privacy and prevent brute-force attacks, access has been temporarily restricted.
+    </p>
+    <div style="background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; padding: 1rem; border-radius: 8px; font-size: 0.92rem; margin-bottom: 2rem;">
+      Please try again after <strong>1 hour</strong> or contact our customer support team for immediate assistance.
+    </div>
+    <a href="{% url 'index' %}" class="button" style="width: 100%; display: inline-block; box-sizing: border-box;">
+      Return to Homepage
+    </a>
+  </div>
+</section>
+{% endblock %}

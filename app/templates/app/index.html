@@ -1,0 +1,135 @@
+{% extends 'app/base.html' %}
+{% load static %}
+
+{% block title %}Home - CheersThePure{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <div class="hero-copy">
+        <span class="eyebrow">Pure Water. Trusted Bottles.</span>
+        <div class="hero-brand">
+            <img class="hero-logo" src="{% static 'app/media/cheers logo.jpeg' %}" alt="CheersThePure logo" />
+            <div class="hero-brand-text">
+                <h1>CheersThePure</h1>
+            </div>
+        </div>
+        <h2 class="hero-tagline">celebrate every movement with cheers</h2>
+        <p>We manufacture premium water bottles for retail, hospitality, and industrial brands with a focus on quality, sustainability, and style.</p>
+        <div class="hero-actions">
+            <a class="button" href="{% url 'products' %}">View Products</a>
+            <a class="button button-secondary" href="{% url 'about' %}">About Us</a>
+        </div>
+        <div class="hero-stat-grid">
+            <div>
+                <strong>120+</strong>
+                <p>Trusted customers</p>
+            </div>
+            <div>
+                <strong>24/7</strong>
+                <p>24/7 Support</p>
+            </div>
+        </div>
+    </div>
+    <div class="hero-media">
+        <video class="hero-video" autoplay muted loop playsinline>
+            <source src="{% static 'app/media/show case.mp4' %}" type="video/mp4" />
+            <!-- If the video file isn't present, the CSS animation below will run as a fallback. -->
+        </video>
+        <div class="hero-animation">
+            <div class="hero-track"></div>
+            <div class="hero-bottles">
+                <div class="hero-bottle bottle-a"></div>
+                <div class="hero-bottle bottle-b"></div>
+                <div class="hero-bottle bottle-c"></div>
+                <div class="hero-bottle bottle-d"></div>
+            </div>
+            <div class="hero-animation-copy">
+                <span>Live bottle manufacturing demo</span>
+                <p>Our production line animation runs for every visitor, showing a smart, modern manufacturing experience.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section highlight-grid">
+    <div class="highlight-card">
+        <h3>Designer-grade UI</h3>
+        <p>Modern gradients, glowing accents, and polished layouts built to impress buyers and partners.</p>
+    </div>
+    <div class="highlight-card">
+        <h3>Manufacturing video showcase</h3>
+        <p>Your production line comes alive in the hero section with a high-quality manufacturing demo video.</p>
+    </div>
+    <div class="highlight-card">
+        <h3>Product bottle previews</h3>
+        <p>Each bottle size displays its own image so clients can see the full 250ml, 500ml, 1L, and 2L range.</p>
+    </div>
+</section>
+
+<section class="section manufacturing-animation">
+    <div class="section-header">
+        <h2>Animated Bottle Manufacturing</h2>
+        <p>See our production line in motion with a stylized simulation of molding, filling, and finishing premium water bottles.</p>
+    </div>
+    <div class="manufacturing-grid">
+        <div class="manufacturing-visual">
+            <div class="conveyor-track"></div>
+            <div class="bottle-row">
+                <div class="bottle bottle-1"></div>
+                <div class="bottle bottle-2"></div>
+                <div class="bottle bottle-3"></div>
+                <div class="bottle bottle-4"></div>
+            </div>
+            <div class="factory-panel panel-1">
+                <span>Design</span>
+            </div>
+            <div class="factory-panel panel-2">
+                <span>Fill</span>
+            </div>
+            <div class="factory-panel panel-3">
+                <span>Pack</span>
+            </div>
+        </div>
+        <div class="manufacturing-details">
+            <article class="manufacturing-step">
+                <span class="step-badge">1</span>
+                <h3>Precision molding</h3>
+                <p>Our high-speed tooling shapes bottles with exact dimensions and durable walls.</p>
+            </article>
+            <article class="manufacturing-step">
+                <span class="step-badge">2</span>
+                <h3>Automated filling</h3>
+                <p>Clean, controlled filling lines keep every bottle pure and ready for packaging.</p>
+            </article>
+            <article class="manufacturing-step">
+                <span class="step-badge">3</span>
+                <h3>Final finishing</h3>
+                <p>Quality checks, labeling, and packing complete every order before shipment.</p>
+            </article>
+        </div>
+    </div>
+</section>
+
+<section class="section overview-grid">
+    <div class="overview-card">
+        <h2>Product categories</h2>
+        <ul data-api-categories></ul>
+    </div>
+    <div class="overview-card">
+        <h2>Customer feedback</h2>
+        <div data-api-testimonials class="testimonial-grid"></div>
+    </div>
+    <div class="overview-card">
+        <h2>Video story</h2>
+        <p>Use your production footage and product photography to highlight manufacturing quality and brand trust.</p>
+    </div>
+</section>
+
+<section class="section">
+    <div class="section-header">
+        <h2>Latest Products from the backend API</h2>
+        <p>These products are loaded dynamically from the server to show live inventory and pricing.</p>
+    </div>
+    <div data-api-products class="product-grid"></div>
+</section>
+{% endblock %}

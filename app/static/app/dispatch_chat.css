@@ -1,0 +1,635 @@
+/* =========================================================================
+   DispatchAI B2B Chat Interface — dispatch_chat.css
+   Modern, enterprise glassmorphism styling for CheersthePure.
+   Supports embedded dashboard console and floating panel.
+   ========================================================================= */
+
+/* ── CSS Variables ─────────────────────────────────────────────────────── */
+:root {
+  --dai-primary:        #0284c7;
+  --dai-primary-hover:  #0369a1;
+  --dai-accent:         #6366f1;
+  --dai-bg-dark:        #0f172a;
+  --dai-card-bg:        #ffffff;
+  --dai-border:         #e2e8f0;
+  --dai-text:           #0f172a;
+  --dai-text-muted:     #64748b;
+  --dai-text-light:     #f8fafc;
+  --dai-user-bubble:    linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
+  --dai-assistant-bubble: #f8fafc;
+  --dai-memory-color:   #8b5cf6;
+  --dai-memory-bg:      #f5f3ff;
+  --dai-business-color: #0284c7;
+  --dai-business-bg:    #f0f9ff;
+  --dai-radius:         1rem;
+  --dai-shadow:         0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+}
+
+/* ── Embedded Dashboard Console ────────────────────────────────────────── */
+.dai-embedded-console {
+  background: white;
+  border-radius: 1.25rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  margin-bottom: 2.25rem;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────── */
+.dai-header {
+  background: linear-gradient(135deg, #0c1a40 0%, #1e3a5f 100%);
+  color: white;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dai-header-main {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.dai-avatar {
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.35);
+  flex-shrink: 0;
+}
+
+.dai-header-title-wrap h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dai-online-badge {
+  background: #10b981;
+  color: #064e3b;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.dai-online-badge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  background: #064e3b;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dai-header-desc {
+  margin: 0.25rem 0 0 0;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.84rem;
+  line-height: 1.4;
+}
+
+.dai-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dai-reset-btn {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.dai-reset-btn:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.dai-header-close {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.35rem;
+  line-height: 1;
+}
+
+.dai-header-close:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* ── Suggested Business Prompts Bar ────────────────────────────────────── */
+.dai-prompts-bar {
+  background: #f8fafc;
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.dai-prompts-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.dai-prompts-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: nowrap;
+}
+
+.dai-prompt-chip {
+  background: white;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+
+.dai-prompt-chip:hover {
+  background: #f0f9ff;
+  border-color: #0284c7;
+  color: #0284c7;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(2, 132, 199, 0.12);
+}
+
+/* ── Messages Container ────────────────────────────────────────────────── */
+.dai-messages {
+  padding: 1.25rem 1.5rem;
+  min-height: 320px;
+  max-height: 480px;
+  overflow-y: auto;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f8fafc;
+}
+
+.dai-messages::-webkit-scrollbar {
+  width: 6px;
+}
+.dai-messages::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+/* ── Message Rows ──────────────────────────────────────────────────────── */
+.dai-msg-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  animation: dai-fade-in 0.2s ease-out;
+}
+
+@keyframes dai-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dai-msg-user {
+  flex-direction: row-reverse;
+}
+
+.dai-msg-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+.dai-msg-user .dai-msg-avatar {
+  background: #0284c7;
+  color: white;
+}
+
+.dai-msg-body {
+  max-width: 82%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.dai-msg-user .dai-msg-body {
+  align-items: flex-end;
+}
+
+/* Message Bubble */
+.dai-bubble {
+  padding: 0.85rem 1.1rem;
+  border-radius: 1rem;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: #1e293b;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  word-break: break-word;
+}
+
+.dai-msg-assistant .dai-bubble {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-top-left-radius: 0.25rem;
+}
+
+.dai-msg-user .dai-bubble {
+  background: var(--dai-user-bubble);
+  color: #ffffff;
+  border-top-right-radius: 0.25rem;
+}
+
+.dai-msg-assistant .dai-bubble strong {
+  color: #0f172a;
+}
+
+.dai-msg-assistant .dai-bubble ul {
+  margin: 0.4rem 0 0.4rem 1.25rem;
+  padding: 0;
+}
+
+.dai-msg-assistant .dai-bubble li {
+  margin-bottom: 0.25rem;
+}
+
+.dai-msg-assistant .dai-bubble code {
+  background: #e2e8f0;
+  color: #0f172a;
+  padding: 0.15rem 0.35rem;
+  border-radius: 0.25rem;
+  font-size: 0.85em;
+  font-family: monospace;
+}
+
+.dai-msg-user .dai-bubble code {
+  background: rgba(255,255,255,0.2);
+  color: #ffffff;
+  padding: 0.15rem 0.35rem;
+  border-radius: 0.25rem;
+}
+
+/* ── Badges: Memory Used & Business Data Used ───────────────────────────── */
+.dai-badges-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.2rem;
+}
+
+.dai-badge-pill {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  letter-spacing: 0.02em;
+  cursor: help;
+  transition: opacity 0.15s ease;
+}
+
+.dai-badge-pill:hover {
+  opacity: 0.85;
+}
+
+/* 1. Memory Used Badge */
+.dai-badge-memory {
+  background: #f5f3ff;
+  color: #7c3aed;
+  border: 1px solid #ddd6fe;
+}
+
+/* 2. Business Data Used Badge */
+.dai-badge-business {
+  background: #f0f9ff;
+  color: #0284c7;
+  border: 1px solid #bae6fd;
+}
+
+.dai-badge-icon {
+  font-size: 0.8rem;
+}
+
+/* ── Actions Row ───────────────────────────────────────────────────────── */
+.dai-actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.4rem;
+}
+
+.dai-action-btn {
+  background: #0284c7;
+  color: white;
+  padding: 0.35rem 0.85rem;
+  border-radius: 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  transition: background 0.15s ease, transform 0.1s ease;
+  box-shadow: 0 2px 4px rgba(2, 132, 199, 0.25);
+}
+
+.dai-action-btn:hover {
+  background: #0369a1;
+  transform: translateY(-1px);
+}
+
+/* ── Timestamp ─────────────────────────────────────────────────────────── */
+.dai-msg-time {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  padding: 0 0.25rem;
+}
+
+/* ── Typing / Loading State ────────────────────────────────────────────── */
+.dai-typing-row {
+  animation: dai-fade-in 0.2s ease-out;
+}
+
+.dai-typing-bubble {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.75rem 1rem;
+}
+
+.dai-typing-dots {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dai-typing-dots span {
+  width: 6px;
+  height: 6px;
+  background: #0284c7;
+  border-radius: 50%;
+  animation: dai-bounce 1.3s infinite ease-in-out;
+}
+
+.dai-typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+.dai-typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes dai-bounce {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+  40% { transform: translateY(-5px); opacity: 1; }
+}
+
+.dai-typing-text {
+  font-size: 0.8rem;
+  color: #64748b;
+  font-style: italic;
+}
+
+/* ── Error State ───────────────────────────────────────────────────────── */
+.dai-bubble-error {
+  background: #fef2f2 !important;
+  border-color: #fecaca !important;
+  color: #991b1b !important;
+}
+
+.dai-retry-btn {
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
+  color: #991b1b;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.3rem 0.65rem;
+  border-radius: 0.4rem;
+  cursor: pointer;
+  margin-top: 0.3rem;
+  transition: background 0.15s ease;
+  align-self: flex-start;
+}
+
+.dai-retry-btn:hover {
+  background: #fecaca;
+}
+
+/* ── Input Area ─────────────────────────────────────────────────────────── */
+.dai-input-area {
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  padding: 0.85rem 1.25rem;
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-end;
+}
+
+.dai-input-wrapper {
+  flex: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.dai-input {
+  width: 100%;
+  background: white;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.75rem;
+  padding: 0.7rem 0.95rem;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: #0f172a;
+  resize: none;
+  outline: none;
+  min-height: 44px;
+  max-height: 120px;
+  box-sizing: border-box;
+  font-family: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.dai-input:focus {
+  border-color: #0284c7;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+}
+
+.dai-input::placeholder {
+  color: #94a3b8;
+}
+
+.dai-input:disabled {
+  background: #f1f5f9;
+  cursor: not-allowed;
+}
+
+.dai-input-hint {
+  font-size: 0.68rem;
+  color: #94a3b8;
+  margin-top: 0.25rem;
+  padding-left: 0.25rem;
+}
+
+.dai-send-btn {
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
+  border: none;
+  border-radius: 0.75rem;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+  box-shadow: 0 4px 10px rgba(2, 132, 199, 0.3);
+  flex-shrink: 0;
+}
+
+.dai-send-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(2, 132, 199, 0.4);
+}
+
+.dai-send-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.dai-send-btn svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
+/* ── Floating Popup Widget Mode ────────────────────────────────────────── */
+#dispatch-launcher {
+  position: fixed;
+  bottom: 1.8rem;
+  right: 1.8rem;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 6px 24px rgba(2, 132, 199, 0.45);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+}
+
+#dispatch-launcher:hover {
+  transform: scale(1.1);
+  box-shadow: 0 10px 32px rgba(2, 132, 199, 0.6);
+}
+
+#dispatch-launcher svg {
+  width: 24px;
+  height: 24px;
+  fill: white;
+}
+
+#dispatch-panel {
+  position: fixed;
+  bottom: 5.8rem;
+  right: 1.8rem;
+  width: 420px;
+  max-width: calc(100vw - 2.5rem);
+  height: 600px;
+  max-height: calc(100vh - 7.5rem);
+  background: white;
+  border-radius: 1.25rem;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform: scale(0.92) translateY(15px);
+  opacity: 0;
+  pointer-events: none;
+  transform-origin: bottom right;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease;
+}
+
+#dispatch-panel.open {
+  transform: scale(1) translateY(0);
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* ── Responsive adjustments ────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .dai-header {
+    padding: 1rem;
+  }
+  .dai-messages {
+    min-height: 280px;
+    padding: 1rem;
+  }
+  .dai-msg-body {
+    max-width: 90%;
+  }
+  .dai-prompts-bar {
+    padding: 0.5rem 1rem;
+  }
+}
