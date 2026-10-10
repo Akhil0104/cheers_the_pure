@@ -26,6 +26,7 @@ from .provider import (
     WebsiteProviderSettings,
 )
 from .generation import generate_validated_site, normalize_generation_brief
+from .quality import review_site
 from .schemas import SiteSchema
 from .views import _validated_json_object
 
@@ -330,6 +331,47 @@ class WebsiteGenerationTests(unittest.TestCase):
                 actor_key="generation-timeout",
             )
         self.assertEqual(error.exception.code, "timeout")
+
+
+class WebsiteQualityReviewTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.payload = deepcopy(CHEERSTHEPURE_EXAMPLE)
+
+    def test_valid_site_has_passing_review(self) -> None:
+        site, review = review_site(self.payload)
+        self.assertIsNotNone(site)
+        self.assertTrue(review["ok"])
+        self.assertEqual({check["status"] for check in review["checks"] if check["key"] == "schema"}, {"pass"})
+
+    def test_quality_warnings_are_distinct_from_blocking_failures(self) -> None:
+        self.payload["sections"][0]["headline"] = "The fastest guaranteed hydration"
+        _, review = review_site(self.payload)
+        statuses = {check["key"]: check["status"] for check in review["checks"]}
+        self.assertEqual(statuses["factual_claims"], "warning")
+        self.assertEqual(statuses["section_completeness"], "pass")
+        self.assertTrue(review["ok"])
+
+    def test_invalid_schema_is_blocking(self) -> None:
+        self.payload["sections"][0]["type"] = "custom_html"
+        site, review = review_site(self.payload)
+        self.assertIsNone(site)
+        self.assertFalse(review["ok"])
+        self.assertIn("blocking", {check["status"] for check in review["checks"]})
+
+    def test_untrusted_business_binding_is_blocking(self) -> None:
+        product = self.payload["sections"][2]["items"][0]
+        product["data_source"] = "cheersthepure_database"
+        product["price"] = {
+            "amount_minor": 100,
+            "currency": "INR",
+            "source": "cheersthepure_database",
+        }
+        _, review = review_site(self.payload)
+        self.assertFalse(review["ok"])
+        self.assertEqual(
+            next(check["status"] for check in review["checks"] if check["key"] == "business_data_bindings"),
+            "blocking",
+        )
 
 
 class SiteBuilderApiTests(TestCase):

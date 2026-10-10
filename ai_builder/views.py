@@ -18,6 +18,7 @@ from dispatch import groq_client
 
 from .builder_prompts import build_section_refine_system_prompt
 from .generation import _validated_json_object, generate_validated_site, normalize_generation_brief
+from .quality import review_site
 from .models import CreatedWebsite, WebsiteRevision
 from .provider import WebsiteAIProvider, WebsiteProviderError
 from .schemas import InquirySubmission, SECTION_MODELS, SiteSchema
@@ -221,6 +222,12 @@ def generate_site(request):
         )
         if _has_untrusted_site_data(validated_site):
             return _json_error("AI output cannot supply live products, prices, or verified testimonials.", 502)
+        _, quality_review = review_site(validated_site.model_dump(mode="json"))
+        if not quality_review["ok"]:
+            return JsonResponse(
+                {"ok": False, "error": "The generated website failed its safety review.", "quality_review": quality_review},
+                status=502,
+            )
     except (ValueError, ValidationError) as error:
         message = error.errors(include_context=False) if isinstance(error, ValidationError) else str(error)
         return JsonResponse({"ok": False, "error": message}, status=502)
@@ -240,7 +247,7 @@ def generate_site(request):
         prompt=persisted_prompt,
     )
     _save_site_with_revision(site, validated_site, WebsiteRevision.Action.GENERATED, {"source": "generate"})
-    return JsonResponse({"ok": True, "saved_site": _serialize_site(site)})
+    return JsonResponse({"ok": True, "saved_site": _serialize_site(site), "quality_review": quality_review})
 
 
 @login_required
@@ -314,6 +321,12 @@ def refine_section(request):
 @require_POST
 def publish_site(request, site_id):
     site = _owned_site(request, site_id)
+    _, quality_review = review_site(site.schema_json)
+    if not quality_review["ok"]:
+        return JsonResponse(
+            {"ok": False, "error": "This website cannot be published until blocking review issues are fixed.", "quality_review": quality_review},
+            status=400,
+        )
     if site.share_token is None:
         site.share_token = uuid.uuid4()
     site.is_published = True
