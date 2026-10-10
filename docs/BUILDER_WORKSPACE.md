@@ -39,6 +39,16 @@ frontend build system or use Tailwind CDN. Generated text is rendered with DOM A
   The response also includes a bounded backend `activity` trace covering planning, catalog
   retrieval (when explicitly requested), generation, repairs, validation, preview preparation,
   and failures. It contains safe summaries and timings only, never prompts or credentials.
+- `POST /api/site-builder/drafts/` starts an owned, unpublished draft.
+- `GET /api/site-builder/sites/<uuid>/revisions/` lists owned revision metadata.
+- `POST /api/site-builder/sites/<uuid>/revisions/<uuid>/restore/` restores a validated owned
+  revision as a new immutable snapshot.
+- `POST /api/site-builder/sites/<uuid>/unpublish/` disables an existing share link.
+
+All builder JSON writes are session-authenticated, CSRF-protected by Django middleware, owner
+scoped, limited to 250 KB request bodies, and return structured errors without stack traces.
+Generation and section regeneration additionally use a per-user ten-request/minute endpoint
+limit before invoking the provider.
 - `GET|POST /api/site-builder/sites/` lists owned sites or saves a validated site.
 - `GET|PUT /api/site-builder/sites/<uuid>/` loads or updates an owned site.
 - `POST /api/site-builder/refine/` calls Groq for one selected section, validates its schema,

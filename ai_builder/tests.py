@@ -638,6 +638,82 @@ class SiteBuilderApiTests(TestCase):
         self.assertEqual(shared.status_code, 200)
         self.assertContains(shared, "shared-site-root")
 
+    def test_start_draft_creates_owned_revision(self) -> None:
+        response = self.post_json("/api/site-builder/drafts/", {"site_name": "Draft Water"})
+        self.assertEqual(response.status_code, 201, response.content)
+        site = CreatedWebsite.objects.get(site_id=response.json()["saved_site"]["site_id"])
+        self.assertEqual(site.owner, self.user)
+        self.assertEqual(site.revisions.count(), 1)
+
+    def test_revision_list_and_restore_are_owner_scoped(self) -> None:
+        site = self.create_saved_site()
+        updated = deepcopy(self.payload)
+        updated["sections"][0]["headline"] = "Changed headline"
+        self.assertEqual(
+            self.client.put(
+                f"/api/site-builder/sites/{site.site_id}/",
+                data=json.dumps({"site": updated}),
+                content_type="application/json",
+            ).status_code,
+            200,
+        )
+        revisions = self.client.get(f"/api/site-builder/sites/{site.site_id}/revisions/")
+        self.assertEqual(revisions.status_code, 200)
+        self.assertEqual(len(revisions.json()["revisions"]), 2)
+        original_revision = site.revisions.get(revision_number=1)
+        restored = self.client.post(
+            f"/api/site-builder/sites/{site.site_id}/revisions/{original_revision.revision_id}/restore/",
+            data="{}",
+            content_type="application/json",
+        )
+        self.assertEqual(restored.status_code, 200, restored.content)
+        site.refresh_from_db()
+        self.assertEqual(site.schema_json["sections"][0]["headline"], self.payload["sections"][0]["headline"])
+        self.assertEqual(site.revisions.count(), 3)
+
+    def test_unpublish_removes_public_access(self) -> None:
+        site = self.create_saved_site()
+        self.client.post(f"/api/site-builder/sites/{site.site_id}/publish/", data="{}", content_type="application/json")
+        response = self.client.post(
+            f"/api/site-builder/sites/{site.site_id}/unpublish/",
+            data="{}",
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        site.refresh_from_db()
+        self.assertFalse(site.is_published)
+        self.assertEqual(Client().get(f"/builder/share/{site.share_token}/").status_code, 404)
+
+    def test_anonymous_and_cross_user_writes_are_rejected(self) -> None:
+        self.client.logout()
+        self.assertIn(
+            self.client.post(
+                "/api/site-builder/drafts/",
+                data="{}",
+                content_type="application/json",
+            ).status_code,
+            (302, 401),
+        )
+        self.client.force_login(self.user)
+        site = self.create_saved_site()
+        self.client.force_login(self.other_user)
+        self.assertEqual(
+            self.client.post(
+                f"/api/site-builder/sites/{site.site_id}/unpublish/",
+                data="{}",
+                content_type="application/json",
+            ).status_code,
+            404,
+        )
+
+    def test_malformed_json_and_wrong_methods_are_rejected(self) -> None:
+        self.assertEqual(
+            self.client.post("/api/site-builder/drafts/", data="{", content_type="application/json").status_code,
+            400,
+        )
+        self.assertEqual(self.client.get("/api/site-builder/drafts/").status_code, 405)
+        self.assertEqual(self.client.get("/api/site-builder/generate/").status_code, 405)
+
     @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
     def test_quote_form_creates_pending_request_token_and_dashboard_record(self) -> None:
         key = uuid.uuid4()

@@ -24,9 +24,13 @@ from .quality import review_site
 from .orchestrator import ActivityTrace, orchestrate_generation
 from .models import CreatedWebsite, WebsiteRevision
 from .provider import WebsiteAIProvider, WebsiteProviderError
+from .schema_examples import CHEERSTHEPURE_EXAMPLE
 from .schemas import InquirySubmission, SECTION_MODELS, SiteSchema
 
 logger = logging.getLogger(__name__)
+MAX_BUILDER_REQUEST_BYTES = 250_000
+AI_RATE_LIMIT = 10
+AI_RATE_WINDOW_SECONDS = 60
 
 
 def _json_error(message: str, status: int = 400) -> JsonResponse:
@@ -43,6 +47,9 @@ def _provider_error(error: WebsiteProviderError) -> JsonResponse:
 
 
 def _request_json(request) -> dict:
+    content_length = request.META.get("CONTENT_LENGTH")
+    if content_length and int(content_length) > MAX_BUILDER_REQUEST_BYTES:
+        raise ValueError("Request body is too large.")
     try:
         data = json.loads(request.body)
     except (json.JSONDecodeError, UnicodeDecodeError, AttributeError) as error:
@@ -50,6 +57,19 @@ def _request_json(request) -> dict:
     if not isinstance(data, dict):
         raise ValueError("Request body must be a JSON object.")
     return data
+
+
+def _check_ai_rate_limit(request) -> bool:
+    key = f"saassum:ai-endpoint:{request.user.pk}"
+    try:
+        current = cache.get(key, 0)
+        if current >= AI_RATE_LIMIT:
+            return False
+        if not cache.add(key, 1, timeout=AI_RATE_WINDOW_SECONDS):
+            cache.incr(key)
+        return True
+    except Exception:
+        return False
 
 
 def _owned_site(request, site_id):
@@ -188,6 +208,28 @@ def site_collection(request):
 
 
 @login_required
+@require_POST
+def start_draft(request):
+    try:
+        data = _request_json(request)
+    except ValueError as error:
+        return _json_error(str(error), 400)
+    name = data.get("site_name", "Untitled website")
+    if not isinstance(name, str) or not name.strip() or len(name.strip()) > 120:
+        return _json_error("site_name must be 1-120 characters.", 400)
+    site_data = json.loads(json.dumps(CHEERSTHEPURE_EXAMPLE))
+    site_data["site_id"] = str(uuid.uuid4())
+    site_data["site_name"] = name.strip()
+    site_data["brand"]["name"] = name.strip()
+    site_data["brand"]["logo_text"] = name.strip()[:40]
+    site_data["sections"][-1]["company_name"] = name.strip()
+    validated_site = SiteSchema.model_validate(site_data)
+    site = CreatedWebsite(site_id=validated_site.site_id, owner=request.user, prompt="")
+    _save_site_with_revision(site, validated_site, WebsiteRevision.Action.IMPORTED, {"source": "draft_start"})
+    return JsonResponse({"ok": True, "saved_site": _serialize_site(site)}, status=201)
+
+
+@login_required
 @require_http_methods(["GET", "PUT"])
 def site_detail(request, site_id):
     site = _owned_site(request, site_id)
@@ -218,6 +260,8 @@ def site_detail(request, site_id):
 @require_POST
 def generate_site(request):
     activity_trace = ActivityTrace()
+    if not _check_ai_rate_limit(request):
+        return _json_error("Website generation is temporarily rate limited. Please try again shortly.", 429)
     try:
         data = _request_json(request)
         brief, persisted_prompt = normalize_generation_brief(data)
@@ -274,6 +318,8 @@ def generate_site(request):
 @login_required
 @require_POST
 def refine_section(request):
+    if not _check_ai_rate_limit(request):
+        return _json_error("Section regeneration is temporarily rate limited. Please try again shortly.", 429)
     try:
         data = _request_json(request)
         site = _owned_site(request, uuid.UUID(str(data.get("site_id"))))
@@ -352,6 +398,58 @@ def publish_site(request, site_id):
         site.share_token = uuid.uuid4()
     site.is_published = True
     site.save(update_fields=["share_token", "is_published", "updated_at"])
+    return JsonResponse({"ok": True, "saved_site": _serialize_site(site)})
+
+
+@login_required
+@require_POST
+def unpublish_site(request, site_id):
+    site = _owned_site(request, site_id)
+    site.is_published = False
+    site.save(update_fields=["is_published", "updated_at"])
+    return JsonResponse({"ok": True, "saved_site": _serialize_site(site)})
+
+
+@login_required
+@require_GET
+def list_revisions(request, site_id):
+    site = _owned_site(request, site_id)
+    revisions = site.revisions.select_related("created_by").order_by("-revision_number")
+    return JsonResponse(
+        {
+            "ok": True,
+            "revisions": [
+                {
+                    "revision_id": str(revision.revision_id),
+                    "revision_number": revision.revision_number,
+                    "schema_version": revision.schema_version,
+                    "action": revision.action,
+                    "metadata": revision.metadata,
+                    "created_at": revision.created_at.isoformat(),
+                }
+                for revision in revisions[:100]
+            ],
+        }
+    )
+
+
+@login_required
+@require_POST
+def restore_revision(request, site_id, revision_id):
+    site = _owned_site(request, site_id)
+    revision = get_object_or_404(WebsiteRevision, revision_id=revision_id, site=site)
+    try:
+        validated_site = SiteSchema.model_validate(revision.schema_json)
+    except ValidationError:
+        return _json_error("That revision is no longer valid and cannot be restored.", 409)
+    if _has_untrusted_site_data(validated_site, site.schema_json):
+        return _json_error("That revision contains untrusted business data and cannot be restored.", 400)
+    _save_site_with_revision(
+        site,
+        validated_site,
+        WebsiteRevision.Action.RESTORED,
+        {"source": "revision_restore", "revision_number": revision.revision_number},
+    )
     return JsonResponse({"ok": True, "saved_site": _serialize_site(site)})
 
 
