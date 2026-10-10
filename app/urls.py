@@ -3,8 +3,18 @@ from django.urls import path
 from django.contrib.auth import views as auth_views
 
 from . import views
+from ai_builder import views as ai_builder_views
 
 urlpatterns = [
+    path('builder/', ai_builder_views.workspace, name='site_builder'),
+    path('builder/share/<uuid:share_token>/', ai_builder_views.shared_site, name='shared_site'),
+    path('api/site-builder/sites/', ai_builder_views.site_collection, name='site_builder_sites'),
+    path('api/site-builder/sites/<uuid:site_id>/', ai_builder_views.site_detail, name='site_builder_site'),
+    path('api/site-builder/sites/<uuid:site_id>/publish/', ai_builder_views.publish_site, name='site_builder_publish'),
+    path('api/site-builder/generate/', ai_builder_views.generate_site, name='site_builder_generate'),
+    path('api/site-builder/refine/', ai_builder_views.refine_section, name='site_builder_refine'),
+    path('api/site-builder/inquiry/', ai_builder_views.submit_inquiry, name='site_builder_inquiry'),
+    path('api/v1/inquiry/submit/', ai_builder_views.submit_inquiry, name='saassum_inquiry_submit'),
     path('', views.index, name='index'),
     path('products/', views.products, name='products'),
     path('products/<int:pk>/', views.product_detail, name='product_detail'),

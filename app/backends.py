@@ -19,7 +19,7 @@ from django.conf import settings
 _MOBILE_RE = re.compile(r'^\+?[\d\s\-]{7,15}$')
 
 ADMIN_EMAIL    = getattr(settings, 'ADMIN_EMAIL', 'cheersthepure@gmail.com')
-ADMIN_PASSWORD = getattr(settings, 'ADMIN_PASSWORD', '9705821826')
+ADMIN_PASSWORD = getattr(settings, 'ADMIN_PASSWORD', 'change-this-admin-password')
 
 
 def _looks_like_mobile(value: str) -> bool:

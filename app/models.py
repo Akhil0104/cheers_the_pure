@@ -114,6 +114,7 @@ class QuoteRequest(models.Model):
         help_text='Wholesale shipment delivery address',
     )
     details = models.TextField(blank=True)
+    inquiry_idempotency_key = models.CharField(max_length=36, unique=True, null=True, blank=True, editable=False)
     email_verified = models.BooleanField(default=False)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     created_at = models.DateTimeField(auto_now_add=True)

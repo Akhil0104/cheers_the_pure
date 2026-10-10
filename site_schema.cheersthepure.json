@@ -1,0 +1,108 @@
+{
+  "metadata": {
+    "site_title": "Cheers The Pure | Pure Water for Every Occasion",
+    "brand_name": "Cheers The Pure",
+    "theme": "cyan",
+    "font_family": "Plus Jakarta Sans",
+    "logo_text": "CHEERS"
+  },
+  "hero": {
+    "headline": "Pure water, made for every moment.",
+    "subheadline": "Thoughtfully packaged drinking water for everyday refreshment, active lifestyles, and dependable business supply.",
+    "badge_text": "Purity you can count on",
+    "primary_cta": {
+      "label": "Explore our range",
+      "link": "/products/"
+    },
+    "secondary_cta": {
+      "label": "Request a wholesale quote",
+      "link": "/order/"
+    }
+  },
+  "purity_features": {
+    "section_title": "Made for confidence in every sip",
+    "subtitle": "Reliable quality and convenient formats for homes, teams, and businesses.",
+    "features": [
+      {
+        "icon_key": "droplet",
+        "title": "Carefully purified",
+        "description": "Every batch is prepared with a quality-first approach from source to seal."
+      },
+      {
+        "icon_key": "shield-check",
+        "title": "Quality checked",
+        "description": "Consistent checks help deliver dependable taste and drinking-water quality."
+      },
+      {
+        "icon_key": "leaf",
+        "title": "Everyday convenience",
+        "description": "Choose practical bottle sizes for commutes, family tables, and shared spaces."
+      },
+      {
+        "icon_key": "truck",
+        "title": "Wholesale ready",
+        "description": "A dedicated B2B quotation route helps businesses plan their regular supply."
+      }
+    ]
+  },
+  "product_grid": {
+    "section_title": "Find your perfect size",
+    "subtitle": "Four formats for a quick refresh, a full day, or a business-sized supply.",
+    "layout_style": "cards",
+    "products": [
+      {
+        "name": "Sport",
+        "capacity": "250ml",
+        "price": 10.00,
+        "description": "A compact bottle for workouts, travel, and quick refreshment.",
+        "badge": "On the go",
+        "image_key": "sport_250ml"
+      },
+      {
+        "name": "Daily",
+        "capacity": "500ml",
+        "price": 15.00,
+        "description": "An easy-to-carry everyday bottle for work, school, and errands.",
+        "badge": "Everyday choice",
+        "image_key": "daily_500ml"
+      },
+      {
+        "name": "Premium",
+        "capacity": "1L",
+        "price": 25.00,
+        "description": "A larger format for longer days, shared meals, and staying refreshed.",
+        "badge": "All-day size",
+        "image_key": "premium_1l"
+      },
+      {
+        "name": "Corporate",
+        "capacity": "2L",
+        "price": 40.00,
+        "description": "A generous format for office pantries, meetings, and group occasions.",
+        "badge": "Business supply",
+        "image_key": "corporate_2l"
+      }
+    ]
+  },
+  "b2b_quote_portal": {
+    "section_title": "Plan your business water supply",
+    "subtitle": "Tell us what your team needs and submit a wholesale quotation request.",
+    "target_api_url": "/order/",
+    "submit_button_text": "Request a wholesale quote",
+    "fields": [
+      "name",
+      "email",
+      "company",
+      "size",
+      "quantity",
+      "delivery_notes"
+    ]
+  },
+  "footer": {
+    "brand_name": "Cheers The Pure",
+    "copyright_text": "Copyright 2026 Cheers The Pure. All rights reserved.",
+    "social_links": [],
+    "contact_email": "cheersthepure@gmail.com",
+    "contact_phone": ""
+  }
+}

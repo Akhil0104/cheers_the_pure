@@ -1,6 +1,7 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User
+from django.conf import settings
 from django.utils import timezone
 from datetime import timedelta
 
@@ -295,7 +296,7 @@ class B2BQuoteWorkflowTestCase(TestCase):
         url = reverse('login')
         post_data = {
             'username': 'cheersthepure@gmail.com',
-            'password': '9705821826'
+            'password': settings.ADMIN_PASSWORD
         }
         response = self.client.post(url, post_data)
         self.assertEqual(response.status_code, 302)

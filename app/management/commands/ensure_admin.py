@@ -15,7 +15,7 @@ from django.contrib.auth.models import User
 from django.conf import settings
 
 ADMIN_EMAIL    = getattr(settings, 'ADMIN_EMAIL', 'cheersthepure@gmail.com')
-ADMIN_PASSWORD = getattr(settings, 'ADMIN_PASSWORD', '9705821826')
+ADMIN_PASSWORD = getattr(settings, 'ADMIN_PASSWORD', 'change-this-admin-password')
 ADMIN_USERNAME = 'cheersadmin'
 
 

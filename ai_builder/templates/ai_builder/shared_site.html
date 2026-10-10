@@ -1,0 +1,22 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Shared website · SaaSsum AI</title>
+  <link rel="stylesheet" href="{% static 'ai_builder/builder.css' %}" />
+</head>
+<body class="shared-site-body">
+  <main class="shared-site-root" id="shared-site-root"></main>
+  {{ site_data|json_script:"shared-site-data" }}
+  <script src="{% static 'ai_builder/renderer.js' %}"></script>
+  <script>
+    SaaSsumRenderer.renderDocument(
+      JSON.parse(document.getElementById('shared-site-data').textContent),
+      document.getElementById('shared-site-root'),
+      { editable: false, readOnly: true, onAction: function () { return false; } }
+    );
+  </script>
+</body>
+</html>

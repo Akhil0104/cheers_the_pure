@@ -41,6 +41,7 @@ from .email_utils import (
 from .decorators import b2b_required, b2c_required
 from .account_utils import detect_account_type
 from .invoice_utils import generate_invoice_for_order
+from .quote_services import create_quote_request_workflow
 
 try:
     import stripe
@@ -255,7 +256,8 @@ def order_request(request, pk=None):
         details = source_data.get('details', '').strip()
 
         if name and email and quantity and size:
-            quote_request = QuoteRequest.objects.create(
+            quote_request, _created = create_quote_request_workflow(
+                request=request,
                 user=request.user,
                 product=product,
                 name=name,
@@ -266,24 +268,6 @@ def order_request(request, pk=None):
                 preferred_delivery_timing=preferred_delivery_timing,
                 delivery_address=delivery_address,
                 details=details,
-                email_verified=False,
-                status='pending',
-            )
-            
-            # Create verification token
-            token_obj = EmailVerificationToken.create_token(quote_request)
-            
-            # Send verification email
-            verify_url = request.build_absolute_uri(f"/verify-email/{token_obj.token}/")
-            subject = "Verify Your Quote Request - CheersThePure"
-            email_message = f"Hello {name},\n\nThank you for requesting a quote from CheersThePure.\n\nPlease verify your email by clicking the link below:\n{verify_url}\n\nOnce verified, you will be able to track the real-time status and view the price quote estimates of your order.\n\nThis link will expire in 24 hours.\n\nBest regards,\nCheersThePure Team"
-            
-            send_mail(
-                subject,
-                email_message,
-                settings.DEFAULT_FROM_EMAIL,
-                [email],
-                fail_silently=True
             )
             
             success = True
@@ -1852,7 +1836,7 @@ def password_reset_request(request):
                 }
                 headers = {
                     "Content-Type": "application/json",
-                    "Authorization": "Bearer SMS_GATEWAY_TOKEN_9705821826"
+                    "Authorization": f"Bearer {settings.SMS_GATEWAY_TOKEN}"
                 }
                 try:
                     requests.post(api_url, json=payload, headers=headers, timeout=3)
@@ -1918,4 +1902,4 @@ def password_reset_verify_otp(request):
         'error': error,
         'phone': otp_phone,
         'expiry_left': int(max(0, otp_expiry - time.time()))
-    })
+    })

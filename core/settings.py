@@ -14,7 +14,8 @@ ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',') if os.environ.get
 
 # Admin credentials from environment variables for secure secret management
 ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', 'cheersthepure@gmail.com')
-ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', '9705821826')
+ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'change-this-admin-password')
+SMS_GATEWAY_TOKEN = os.environ.get('SMS_GATEWAY_TOKEN', '')
 
 # ── Authentication Backends ──────────────────────────────────────────────────
 # Primary: email OR mobile number login (no username required).
@@ -37,6 +38,7 @@ INSTALLED_APPS = [
     'axes',
     'app',
     'dispatch',  # DispatchAI — B2B AI agent
+    'ai_builder',
 ]
 
 MIDDLEWARE = [
@@ -167,6 +169,12 @@ if not DEBUG:
 
 # Groq LLM — https://console.groq.com/keys
 GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
+
+# Trusted same-origin endpoint used by the SaaSsum builder; never comes from SiteSchema.
+SAASSUM_INQUIRY_API_URL = os.environ.get(
+    'SAASSUM_INQUIRY_API_URL',
+    '/api/v1/inquiry/submit/',
+)
 
 # Hindsight Persistent Memory — https://api.hindsight.vectorize.io
 HINDSIGHT_URL = os.environ.get('HINDSIGHT_URL', os.environ.get('HINDSIGHT_API_URL', 'https://api.hindsight.vectorize.io'))
