@@ -39,12 +39,26 @@
       <section class="control-section prompt-section">
         <div class="section-kicker"><span>01</span> CREATE</div>
         <h1>From business idea<br />to live website</h1>
-        <p class="sidebar-subtitle">Describe what you have in mind. Shape every section as you go.</p>
+        <p class="sidebar-subtitle">Describe what you have in mind. Answer a few optional questions, then shape every section as you go.</p>
         <form id="generate-form">
           <label class="field-label" for="site-prompt">Your website brief</label>
-          <textarea id="site-prompt" maxlength="4000" placeholder="Describe the website you want to build..." required></textarea>
+          <textarea id="site-prompt" maxlength="4000" placeholder="Example: A clean wholesale website for a bottled water supplier..." required aria-describedby="prompt-help"></textarea>
+          <div class="prompt-helper" id="prompt-help"><span>Tell us what you offer and who it is for.</span><span id="prompt-count">0 / 4000</span></div>
+          <button class="sample-prompt-button" id="sample-prompt-button" type="button">Use a sample brief</button>
+          <details class="follow-up-details">
+            <summary>Answer optional follow-up questions</summary>
+            <div class="follow-up-fields">
+              <label class="field-label" for="site-audience">Who is this for?</label>
+              <input id="site-audience" maxlength="4000" placeholder="Hotels, retailers, or local families." />
+              <label class="field-label" for="site-goal">What should visitors do?</label>
+              <input id="site-goal" maxlength="4000" placeholder="Request a wholesale quote." />
+              <label class="field-label" for="site-visual-direction">What should it feel like?</label>
+              <input id="site-visual-direction" maxlength="4000" placeholder="Calm, clear, and trustworthy." />
+            </div>
+          </details>
           <button class="primary-button" id="generate-button" type="submit"><span class="button-label">Generate website</span><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button>
           <div class="generation-progress" id="generation-progress" hidden aria-live="polite"><span class="loading-spinner" aria-hidden="true"></span><span id="generation-message">Preparing your website…</span></div>
+          <button class="retry-button" id="retry-button" type="button" hidden>Try generation again</button>
         </form>
       </section>
 

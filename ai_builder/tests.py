@@ -489,6 +489,10 @@ class SiteBuilderApiTests(TestCase):
         self.assertEqual(builder_response.status_code, 200)
         self.assertContains(builder_response, "SaaSsum AI Builder")
         self.assertContains(builder_response, 'id="saas-workspace"')
+        self.assertContains(builder_response, 'id="sample-prompt-button"')
+        self.assertContains(builder_response, 'id="retry-button"')
+        self.assertContains(builder_response, "Answer optional follow-up questions")
+        self.assertContains(builder_response, 'aria-live="polite"')
 
         route_names_and_paths = (
             ("index", "/"),

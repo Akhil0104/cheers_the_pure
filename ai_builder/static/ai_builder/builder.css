@@ -45,7 +45,18 @@ body:has(#saas-workspace) .main-content { max-width: none; margin: 0; padding: 0
 .field-label { display: block; margin: 12px 0 7px; color: #dbe5e7; font-size: 11px; font-weight: 600; }
 .builder-sidebar textarea, .builder-sidebar select { width: 100%; border: 1px solid #405460; border-radius: 6px; color: #f5f8f8; background: #203642; font: 12px/1.55 var(--builder-font); outline: none; }
 .builder-sidebar textarea { min-height: 83px; padding: 10px 11px; resize: vertical; }
+.builder-sidebar input { width: 100%; min-height: 36px; padding: 8px 10px; border: 1px solid #405460; border-radius: 6px; color: #f5f8f8; background: #203642; font: 12px/1.45 var(--builder-font); outline: none; }
+.builder-sidebar input::placeholder { color: #8ea2aa; }
+.builder-sidebar input:focus { border-color: #44c4c8; box-shadow: 0 0 0 3px #21b9c533; }
 .builder-sidebar textarea::placeholder { color: #8ea2aa; }
+.prompt-helper { display: flex; justify-content: space-between; gap: 8px; margin-top: 5px; color: #8ea2aa; font-size: 10px; }
+.sample-prompt-button, .retry-button { margin-top: 8px; padding: 0; border: 0; color: #82d8d6; background: transparent; cursor: pointer; font: 600 10px var(--builder-font); text-align: left; }
+.sample-prompt-button:hover, .retry-button:hover { color: #b5efeb; text-decoration: underline; }
+.follow-up-details { margin-top: 12px; color: #b9cbd0; font-size: 11px; }
+.follow-up-details summary { cursor: pointer; }
+.follow-up-fields { padding-top: 3px; }
+.follow-up-fields .field-label { margin-top: 9px; }
+.retry-button { width: 100%; min-height: 30px; padding: 0 10px; border: 1px solid #49616b; border-radius: 6px; text-align: center; }
 .builder-sidebar select { min-height: 37px; padding: 0 10px; }
 .builder-sidebar select:disabled, .builder-sidebar textarea:disabled { opacity: .55; }
 .builder-sidebar textarea:focus, .builder-sidebar select:focus { border-color: #44c4c8; box-shadow: 0 0 0 3px #21b9c533; }

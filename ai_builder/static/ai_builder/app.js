@@ -22,6 +22,12 @@
     canvas: document.getElementById('site-canvas'),
     generateForm: document.getElementById('generate-form'),
     prompt: document.getElementById('site-prompt'),
+    audience: document.getElementById('site-audience'),
+    goal: document.getElementById('site-goal'),
+    visualDirection: document.getElementById('site-visual-direction'),
+    promptCount: document.getElementById('prompt-count'),
+    samplePrompt: document.getElementById('sample-prompt-button'),
+    retryButton: document.getElementById('retry-button'),
     generateButton: document.getElementById('generate-button'),
     progress: document.getElementById('generation-progress'),
     progressMessage: document.getElementById('generation-message'),
@@ -79,7 +85,9 @@
         throw new Error('Your session has expired. Sign in again to continue.');
       }
       const serverError = payload && payload.error;
-      throw new Error(typeof serverError === 'string' ? serverError : `The server could not complete this request (${response.status}).`);
+      const error = new Error(typeof serverError === 'string' ? serverError : `The server could not complete this request (${response.status}).`);
+      error.activity = payload && payload.activity ? payload.activity : [];
+      throw error;
     }
     return payload;
   }
@@ -87,6 +95,25 @@
   function showMessage(message, isError) {
     elements.feedback.textContent = message;
     elements.feedback.classList.toggle('is-error', Boolean(isError));
+  }
+
+  function updatePromptCount() {
+    elements.promptCount.textContent = `${elements.prompt.value.length} / 4000`;
+  }
+
+  function generationPayload() {
+    return {
+      prompt: elements.prompt.value.trim(),
+      audience: elements.audience.value.trim(),
+      goal: elements.goal.value.trim(),
+      visual_direction: elements.visualDirection.value.trim()
+    };
+  }
+
+  function showActivity(activity) {
+    if (!Array.isArray(activity) || !activity.length) return;
+    const latest = activity[activity.length - 1];
+    if (latest && latest.summary) showMessage(latest.summary, latest.outcome === 'failed');
   }
 
   function markDirty(message) {
@@ -296,28 +323,49 @@
     }
     state.prompt = prompt;
     elements.generateButton.disabled = true;
+    elements.retryButton.hidden = true;
     elements.progress.hidden = false;
-    elements.progressMessage.textContent = 'Designing the page structure…';
+    elements.progressMessage.textContent = 'Planning your page structure…';
     showMessage('Generating and validating your website.');
     const progressTimer = window.setTimeout(function () {
-      elements.progressMessage.textContent = 'Checking sections and content…';
+      elements.progressMessage.textContent = 'Checking sections, links, and content…';
     }, 1800);
     try {
       const result = await request(workspace.dataset.generateUrl, {
         method: 'POST',
-        body: JSON.stringify({ prompt: prompt })
+        body: JSON.stringify(generationPayload())
       });
       window.clearTimeout(progressTimer);
+      showActivity(result.activity);
       loadSavedSite(result.saved_site, prompt);
       markSaved('Website generated and saved to your account.');
     } catch (error) {
       window.clearTimeout(progressTimer);
+      showActivity(error.activity);
       showMessage(error.message, true);
+      elements.retryButton.hidden = false;
     } finally {
       elements.generateButton.disabled = false;
       elements.progress.hidden = true;
     }
   });
+
+  elements.retryButton.addEventListener('click', function () {
+    elements.generateForm.requestSubmit();
+  });
+
+  elements.samplePrompt.addEventListener('click', function () {
+    elements.prompt.value = 'A clean wholesale website for a bottled water supplier serving hotels, restaurants, and retailers.';
+    elements.audience.value = 'Hotels, restaurants, and retail distributors';
+    elements.goal.value = 'Collect wholesale quote requests';
+    elements.visualDirection.value = 'Calm, clear, and trustworthy';
+    updatePromptCount();
+    elements.prompt.focus();
+    showMessage('Sample brief added. Edit it or generate when ready.');
+  });
+
+  elements.prompt.addEventListener('input', updatePromptCount);
+  updatePromptCount();
 
   function loadSavedSite(savedSite, prompt) {
     state.site = savedSite.site;
