@@ -8,6 +8,7 @@ from django.core.cache import cache
 from django.core import mail
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase, override_settings
+from django.urls import resolve, reverse
 from pydantic import ValidationError
 
 from app.models import EmailVerificationToken, QuoteRequest, UserProfile
@@ -161,6 +162,31 @@ class SiteBuilderApiTests(TestCase):
             content_type="application/json",
             HTTP_IDEMPOTENCY_KEY=str(key or uuid.uuid4()),
         )
+
+    def test_builder_landing_route_and_existing_routes_resolve(self) -> None:
+        self.client.logout()
+        login_response = self.client.get(reverse("site_builder"))
+        self.assertRedirects(
+            login_response,
+            f"{reverse('login')}?next={reverse('site_builder')}",
+        )
+
+        self.client.force_login(self.user)
+        builder_response = self.client.get(reverse("site_builder"))
+        self.assertEqual(builder_response.status_code, 200)
+        self.assertContains(builder_response, "SaaSsum AI Builder")
+        self.assertContains(builder_response, 'id="saas-workspace"')
+
+        route_names_and_paths = (
+            ("index", "/"),
+            ("products", "/products/"),
+            ("login", "/login/"),
+        )
+        for route_name, expected_path in route_names_and_paths:
+            self.assertEqual(reverse(route_name), expected_path)
+            self.assertIsNotNone(resolve(expected_path))
+
+        self.assertEqual(resolve("/api/agent/chat").url_name, "agent_chat_api")
 
     def create_saved_site(self) -> CreatedWebsite:
         response = self.post_json(
