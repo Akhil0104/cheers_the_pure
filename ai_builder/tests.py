@@ -27,6 +27,7 @@ from .provider import (
 )
 from .generation import generate_validated_site, normalize_generation_brief
 from .quality import review_site
+from .orchestrator import ActivityTrace, orchestrate_generation, plan_website
 from .schemas import SiteSchema
 from .views import _validated_json_object
 
@@ -372,6 +373,69 @@ class WebsiteQualityReviewTests(unittest.TestCase):
             next(check["status"] for check in review["checks"] if check["key"] == "business_data_bindings"),
             "blocking",
         )
+
+
+class WebsiteOrchestrationTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.payload = deepcopy(CHEERSTHEPURE_EXAMPLE)
+        self.brief = {
+            "business_description": "A bottled water supplier",
+            "audience": "Hotels",
+            "goal": "Collect inquiries",
+            "visual_direction": "Clean",
+            "requested_sections": ["hero", "footer"],
+        }
+
+    def test_planner_handoff_and_activity_trace(self) -> None:
+        plan = plan_website(self.brief)
+        self.assertEqual(plan.section_types[:2], ("hero", "footer"))
+        result = orchestrate_generation(
+            provider=MockWebsiteAIProvider({"content": json.dumps(self.payload)}),
+            site_id=str(self.payload["site_id"]),
+            brief=self.brief,
+            actor_key="orchestration-success",
+        )
+        stages = [event["stage"] for event in result.activity]
+        self.assertEqual(stages, ["planning", "catalog", "generation", "validation", "preview"])
+        self.assertTrue(all(event["summary"] for event in result.activity))
+
+    def test_invalid_output_records_repair_and_failure(self) -> None:
+        provider = MockWebsiteAIProvider({"content": '{"unsupported": true}'})
+        with self.assertRaises(ValidationError):
+            orchestrate_generation(
+                provider=provider,
+                site_id=str(self.payload["site_id"]),
+                brief=self.brief,
+                actor_key="orchestration-invalid",
+            )
+
+    def test_provider_failure_records_generation_failure(self) -> None:
+        provider = WebsiteAIProvider(
+            chat=lambda **kwargs: (_ for _ in ()).throw(TimeoutError()),
+            config=WebsiteProviderSettings(rate_limit=10),
+        )
+        trace = ActivityTrace()
+        with self.assertRaises(WebsiteProviderError):
+            orchestrate_generation(
+                provider=provider,
+                site_id=str(self.payload["site_id"]),
+                brief=self.brief,
+                actor_key="orchestration-timeout",
+                trace=trace,
+            )
+        self.assertEqual(trace.events[-1].stage, "generation_failed")
+
+    def test_catalog_tool_failure_falls_back_to_sample_data(self) -> None:
+        brief = {**self.brief, "use_catalog": True}
+        result = orchestrate_generation(
+            provider=MockWebsiteAIProvider({"content": json.dumps(self.payload)}),
+            site_id=str(self.payload["site_id"]),
+            brief=brief,
+            actor_key="orchestration-catalog",
+            catalog_tool=lambda _: "not records",
+        )
+        catalog_event = next(event for event in result.activity if event["stage"] == "catalog")
+        self.assertEqual(catalog_event["outcome"], "fallback")
 
 
 class SiteBuilderApiTests(TestCase):

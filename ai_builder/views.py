@@ -17,8 +17,9 @@ from app.quote_services import IdempotencyConflict, create_quote_request_workflo
 from dispatch import groq_client
 
 from .builder_prompts import build_section_refine_system_prompt
-from .generation import _validated_json_object, generate_validated_site, normalize_generation_brief
+from .generation import _validated_json_object, normalize_generation_brief
 from .quality import review_site
+from .orchestrator import ActivityTrace, orchestrate_generation
 from .models import CreatedWebsite, WebsiteRevision
 from .provider import WebsiteAIProvider, WebsiteProviderError
 from .schemas import InquirySubmission, SECTION_MODELS, SiteSchema
@@ -28,6 +29,10 @@ logger = logging.getLogger(__name__)
 
 def _json_error(message: str, status: int = 400) -> JsonResponse:
     return JsonResponse({"ok": False, "error": message}, status=status)
+
+
+def _json_error_with_activity(message: str, status: int, activity: ActivityTrace) -> JsonResponse:
+    return JsonResponse({"ok": False, "error": message, "activity": activity.as_list()}, status=status)
 
 
 def _provider_error(error: WebsiteProviderError) -> JsonResponse:
@@ -210,36 +215,45 @@ def site_detail(request, site_id):
 @login_required
 @require_POST
 def generate_site(request):
+    activity_trace = ActivityTrace()
     try:
         data = _request_json(request)
         brief, persisted_prompt = normalize_generation_brief(data)
         site_id = str(uuid.uuid4())
-        validated_site = generate_validated_site(
+        orchestration = orchestrate_generation(
             provider=WebsiteAIProvider(),
             site_id=site_id,
             brief=brief,
             actor_key=f"user:{request.user.pk}",
+            trace=activity_trace,
         )
+        validated_site = orchestration.site
         if _has_untrusted_site_data(validated_site):
-            return _json_error("AI output cannot supply live products, prices, or verified testimonials.", 502)
-        _, quality_review = review_site(validated_site.model_dump(mode="json"))
-        if not quality_review["ok"]:
-            return JsonResponse(
-                {"ok": False, "error": "The generated website failed its safety review.", "quality_review": quality_review},
-                status=502,
+            activity_trace.record("generation_failed", "failed", "Generated content contained untrusted business data.")
+            return _json_error_with_activity(
+                "AI output cannot supply live products, prices, or verified testimonials.",
+                502,
+                activity_trace,
             )
     except (ValueError, ValidationError) as error:
         message = error.errors(include_context=False) if isinstance(error, ValidationError) else str(error)
-        return JsonResponse({"ok": False, "error": message}, status=502)
+        return _json_error_with_activity(message, 502, activity_trace)
     except WebsiteProviderError as error:
         logger.warning("Website generation provider failure: %s", error.code)
-        return _provider_error(error)
+        response = _provider_error(error)
+        response_data = json.loads(response.content)
+        response_data["activity"] = activity_trace.as_list()
+        return JsonResponse(response_data, status=response.status_code)
     except RuntimeError as error:
         logger.warning("Website generation unavailable: %s", error)
-        return _json_error("Website generation is unavailable. Check the Groq configuration and try again.", 503)
+        return _json_error_with_activity(
+            "Website generation is unavailable. Check the Groq configuration and try again.",
+            503,
+            activity_trace,
+        )
     except Exception:
         logger.exception("Website generation failed")
-        return _json_error("Website generation failed. Please try again.", 502)
+        return _json_error_with_activity("Website generation failed. Please try again.", 502, activity_trace)
 
     site = CreatedWebsite(
         site_id=validated_site.site_id,
@@ -247,7 +261,12 @@ def generate_site(request):
         prompt=persisted_prompt,
     )
     _save_site_with_revision(site, validated_site, WebsiteRevision.Action.GENERATED, {"source": "generate"})
-    return JsonResponse({"ok": True, "saved_site": _serialize_site(site), "quality_review": quality_review})
+    return JsonResponse({
+        "ok": True,
+        "saved_site": _serialize_site(site),
+        "quality_review": orchestration.quality_review,
+        "activity": orchestration.activity,
+    })
 
 
 @login_required

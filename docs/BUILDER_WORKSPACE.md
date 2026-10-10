@@ -36,6 +36,9 @@ frontend build system or use Tailwind CDN. Generated text is rendered with DOM A
   schema, safety, or trusted-data findings prevent the site from being saved or published;
   content-quality findings are surfaced as warnings and do not claim WCAG compliance or business
   success.
+  The response also includes a bounded backend `activity` trace covering planning, catalog
+  retrieval (when explicitly requested), generation, repairs, validation, preview preparation,
+  and failures. It contains safe summaries and timings only, never prompts or credentials.
 - `GET|POST /api/site-builder/sites/` lists owned sites or saves a validated site.
 - `GET|PUT /api/site-builder/sites/<uuid>/` loads or updates an owned site.
 - `POST /api/site-builder/refine/` calls Groq for one selected section, validates its schema,

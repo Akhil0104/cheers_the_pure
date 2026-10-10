@@ -76,7 +76,11 @@ def build_generation_messages(site_id: UUID | str, brief: dict, repair_feedback:
         "site_id": str(site_id),
         "brief": brief,
         "constraints": {
-            "trusted_catalog_data": "not supplied; use sample products with null prices",
+            "trusted_catalog_data": (
+                "trusted records are supplied below; preserve their values and provenance"
+                if brief.get("trusted_catalog_records")
+                else "not supplied; use sample products with null prices"
+            ),
             "testimonials": "sample only unless verified data is supplied",
             "rendering": "plain text content only; no HTML, CSS, scripts, code, imports, or commands",
         },
