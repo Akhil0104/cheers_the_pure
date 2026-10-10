@@ -13,6 +13,7 @@ urlpatterns = [
     path('api/site-builder/sites/<uuid:site_id>/publish/', ai_builder_views.publish_site, name='site_builder_publish'),
     path('api/site-builder/generate/', ai_builder_views.generate_site, name='site_builder_generate'),
     path('api/site-builder/refine/', ai_builder_views.refine_section, name='site_builder_refine'),
+    path('api/site-builder/business-assistant/', ai_builder_views.business_assistant, name='site_builder_business_assistant'),
     path('api/site-builder/inquiry/', ai_builder_views.submit_inquiry, name='site_builder_inquiry'),
     path('api/v1/inquiry/submit/', ai_builder_views.submit_inquiry, name='saassum_inquiry_submit'),
     path('', views.index, name='index'),

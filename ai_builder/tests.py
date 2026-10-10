@@ -13,6 +13,7 @@ from django.urls import resolve, reverse
 from pydantic import ValidationError
 
 from app.models import EmailVerificationToken, QuoteRequest, UserProfile
+from dispatch.models import ConversationSession
 
 from .schema_examples import CHEERSTHEPURE_EXAMPLE
 from .models import CreatedWebsite, WebsiteRevision
@@ -499,6 +500,53 @@ class SiteBuilderApiTests(TestCase):
             self.assertIsNotNone(resolve(expected_path))
 
         self.assertEqual(resolve("/api/agent/chat").url_name, "agent_chat_api")
+        self.assertEqual(
+            resolve("/api/site-builder/business-assistant/").url_name,
+            "site_builder_business_assistant",
+        )
+
+    @patch("ai_builder.views.dispatch_agent.process_message")
+    def test_business_assistant_delegates_to_dispatchai(self, process_message) -> None:
+        process_message.return_value = {
+            "ok": True,
+            "content": "The catalog has current wholesale information.",
+            "memories_count": 1,
+            "rules_applied": [],
+            "decision_type": "product_recommendation",
+            "latency_ms": 12,
+            "error": False,
+        }
+        response = self.post_json(
+            "/api/site-builder/business-assistant/",
+            {"message": "Which products are available?"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["reply"], "The catalog has current wholesale information.")
+        self.assertEqual(response.json()["agent_meta"]["memories_count"], 1)
+        process_message.assert_called_once()
+        self.assertEqual(process_message.call_args.kwargs["user"], self.user)
+
+    def test_business_assistant_rejects_cross_user_session(self) -> None:
+        foreign_session = ConversationSession.objects.create(user=self.other_user)
+        response = self.post_json(
+            "/api/site-builder/business-assistant/",
+            {"message": "Check my order", "session_id": str(foreign_session.session_id)},
+        )
+        self.assertEqual(response.status_code, 404)
+
+    def test_business_assistant_blocks_b2c_accounts(self) -> None:
+        b2c = get_user_model().objects.create_user(
+                username="builder-b2c",
+                email="b2c-builder@gmail.com",
+                password="password123",
+        )
+        UserProfile.objects.create(user=b2c, account_type="b2c", role="customer")
+        self.client.force_login(b2c)
+        response = self.post_json(
+            "/api/site-builder/business-assistant/",
+            {"message": "Check my order"},
+        )
+        self.assertEqual(response.status_code, 403)
 
     def create_saved_site(self) -> CreatedWebsite:
         response = self.post_json(

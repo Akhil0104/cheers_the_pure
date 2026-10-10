@@ -15,6 +15,8 @@ from pydantic import ValidationError
 from app.account_utils import detect_account_type
 from app.quote_services import IdempotencyConflict, create_quote_request_workflow
 from dispatch import groq_client
+from dispatch import agent as dispatch_agent
+from dispatch.models import ConversationSession
 
 from .builder_prompts import build_section_refine_system_prompt
 from .generation import _validated_json_object, normalize_generation_brief
@@ -351,6 +353,62 @@ def publish_site(request, site_id):
     site.is_published = True
     site.save(update_fields=["share_token", "is_published", "updated_at"])
     return JsonResponse({"ok": True, "saved_site": _serialize_site(site)})
+
+
+@login_required
+@require_POST
+def business_assistant(request):
+    """Delegate grounded CheersThePure questions to the existing DispatchAI agent."""
+    profile = getattr(request.user, "profile", None)
+    account_type = profile.account_type if profile else detect_account_type(request.user.email)
+    if not request.user.is_staff and account_type != "b2b":
+        return _json_error("A B2B account is required to use the business assistant.", 403)
+
+    try:
+        data = _request_json(request)
+        message = data.get("message", "")
+        if not isinstance(message, str) or not message.strip() or len(message) > 2000:
+            return _json_error("Enter a business question of 1-2000 characters.")
+    except ValueError as error:
+        return _json_error(str(error), 400)
+
+    session = None
+    if data.get("session_id"):
+        try:
+            session = ConversationSession.objects.get(
+                session_id=data["session_id"],
+                user=request.user,
+                is_active=True,
+            )
+        except (ConversationSession.DoesNotExist, ValueError, TypeError):
+            return _json_error("Business assistant session not found.", 404)
+    if session is None:
+        session = ConversationSession.objects.create(user=request.user)
+
+    try:
+        result = dispatch_agent.process_message(
+            user=request.user,
+            session=session,
+            user_message_text=message.strip(),
+        )
+    except Exception:
+        logger.exception("Business assistant delegation failed")
+        return _json_error("The business assistant is unavailable. Please try again.", 503)
+
+    return JsonResponse(
+        {
+            "ok": bool(result.get("ok", not result.get("error", False))),
+            "session_id": str(session.session_id),
+            "reply": result.get("content", ""),
+            "agent_meta": {
+                "memories_count": result.get("memories_count", 0),
+                "rules_applied": result.get("rules_applied", []),
+                "decision_type": result.get("decision_type", "general_response"),
+                "latency_ms": result.get("latency_ms", 0),
+                "error": bool(result.get("error", False)),
+            },
+        }
+    )
 
 
 def submit_inquiry(request):

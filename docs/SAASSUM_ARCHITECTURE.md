@@ -116,6 +116,24 @@ transport wrapper.
   clients to the browser.
 - Keep builder prompts in [`ai_builder/builder_prompts.py`](../ai_builder/builder_prompts.py),
   separate from [`dispatch/prompts/`](../dispatch/prompts/).
+
+  ### DispatchAI integration boundary
+
+  SaaSsum generation remains owned by `ai_builder.orchestrator`, `ai_builder.generation`, and
+  the builder provider. For grounded CheersThePure business questions, the builder exposes
+  `POST /api/site-builder/business-assistant/` as a thin adapter over
+  `dispatch.agent.process_message`. The adapter:
+
+  - requires an authenticated B2B or staff user;
+  - creates or loads only a `ConversationSession` owned by that user;
+  - preserves DispatchAI's `memories_count`, `rules_applied`, `decision_type`, latency, and
+    error metadata contract;
+  - does not pass builder prompts or generated site JSON into DispatchAI;
+  - does not duplicate Groq, Hindsight, catalog, or business-rule clients.
+
+  DispatchAI continues to own authoritative catalog/order/quote context, business-rule validation,
+  and buyer-scoped Hindsight memory. Retrieved memory remains untrusted context, and transactional
+  prices, payments, orders, and credentials are never stored in SaaSsum or Hindsight memory.
 - Enforce bounded prompt/instruction lengths and strict JSON output.
 - Return typed outcomes for success, invalid model output, timeout, unavailable provider, and
   unexpected provider failure.
