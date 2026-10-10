@@ -1,3 +1,4 @@
+import json
 from typing import Annotated, Literal
 from uuid import UUID
 import re
@@ -41,6 +42,8 @@ HeroAction = Literal[
     "learn_more",
 ]
 QuoteFieldName = Literal["name", "email", "company", "capacity", "quantity", "details"]
+BindingKey = Literal["product_id", "name", "capacity"]
+MAX_SITE_JSON_BYTES = 100_000
 
 _HTML_MARKERS = ("<", ">", "javascript:", "data:text/html", "vbscript:", "@import", "expression(")
 _UNSAFE_TEXT_PATTERNS = (
@@ -113,6 +116,13 @@ class TrustedPrice(StrictModel):
     source: Literal["cheersthepure_database"]
 
 
+class CatalogBinding(StrictModel):
+    source: Literal["cheersthepure_catalog"]
+    entity: Literal["product"]
+    key: BindingKey
+    value: Annotated[str, StringConstraints(min_length=1, max_length=80)]
+
+
 class ProductItem(StrictModel):
     name: Annotated[str, StringConstraints(min_length=1, max_length=100)]
     capacity: Annotated[str, StringConstraints(min_length=1, max_length=40)]
@@ -121,6 +131,7 @@ class ProductItem(StrictModel):
     badge: Annotated[str, StringConstraints(max_length=60)] | None = None
     data_source: Literal["sample", "cheersthepure_database"]
     price: TrustedPrice | None = None
+    data_binding: CatalogBinding | None = None
 
     @model_validator(mode="after")
     def validate_price_provenance(self) -> "ProductItem":
@@ -241,6 +252,18 @@ class SiteSchema(StrictModel):
         if len(ids) != len(set(ids)):
             raise ValueError("section IDs must be unique")
         return sections
+
+    @model_validator(mode="before")
+    @classmethod
+    def enforce_document_size(cls, value):
+        if isinstance(value, dict):
+            try:
+                document_size = len(json.dumps(value, ensure_ascii=False).encode("utf-8"))
+            except (TypeError, ValueError) as error:
+                raise ValueError("site schema must be JSON-serializable") from error
+            if document_size > MAX_SITE_JSON_BYTES:
+                raise ValueError(f"site schema exceeds the {MAX_SITE_JSON_BYTES}-byte limit")
+        return value
 
 
 QuoteCapacity = Literal["250 ml", "500 ml", "1000 ml", "2 litres"]

@@ -61,6 +61,11 @@ class SiteSchemaTests(unittest.TestCase):
         with self.assertRaises(ValidationError):
             SiteSchema.model_validate(self.payload)
 
+    def test_excessive_document_size_is_rejected(self) -> None:
+        self.payload["sections"][0]["subheadline"] = "x" * 100_001
+        with self.assertRaises(ValidationError):
+            SiteSchema.model_validate(self.payload)
+
     def test_unknown_section_type_is_rejected(self) -> None:
         self.payload["sections"][0]["type"] = "custom_html"
         with self.assertRaises(ValidationError):
@@ -120,6 +125,28 @@ class SiteSchemaTests(unittest.TestCase):
         }
         site = SiteSchema.model_validate(self.payload)
         self.assertEqual(site.sections[2].items[0].price.amount_minor, 1025)
+
+    def test_valid_catalog_binding_is_strictly_typed(self) -> None:
+        product = self.payload["sections"][2]["items"][0]
+        product["data_binding"] = {
+            "source": "cheersthepure_catalog",
+            "entity": "product",
+            "key": "capacity",
+            "value": "500 ml",
+        }
+        site = SiteSchema.model_validate(self.payload)
+        self.assertEqual(site.sections[2].items[0].data_binding.key, "capacity")
+
+    def test_unsafe_catalog_binding_is_rejected(self) -> None:
+        product = self.payload["sections"][2]["items"][0]
+        product["data_binding"] = {
+            "source": "https://attacker.example/catalog",
+            "entity": "product",
+            "key": "capacity",
+            "value": "500 ml",
+        }
+        with self.assertRaises(ValidationError):
+            SiteSchema.model_validate(self.payload)
 
     def test_duplicate_json_keys_are_rejected(self) -> None:
         with self.assertRaises(ValueError):

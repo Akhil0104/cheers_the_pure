@@ -2,7 +2,8 @@
 
 `ai_builder.schemas.SiteSchema` is the versioned, strict Pydantic v2 contract for generated
 SaaSsum AI websites. The project already requires `pydantic>=2.7,<3.0`, so no alternate
-validation dependency is needed.
+validation dependency is needed. A complete JSON document is limited to 100,000 UTF-8 bytes
+in addition to per-field and per-collection limits.
 
 ## Contract
 
@@ -11,14 +12,22 @@ The root fields are `schema_version` (`"1.0"`), UUID `site_id`, `site_name`,
 `blue`, `emerald`, `violet`, `slate`, or `neutral`; surface is `light` or `dark`.
 
 Sections use a discriminated `type` union: `hero`, `features`, `product_grid`, `quote_form`,
-`footer`, `text_block`, or `testimonials`. Each section has a stable ID matching
+`footer`, `text_block`, or `testimonials`. These are the complete supported section types;
+unknown types such as arbitrary HTML sections are rejected. Each section has a stable ID matching
 `^[a-zA-Z][a-zA-Z0-9_-]{0,63}$`. A site has 1-12 sections and IDs must be unique. Unknown
 properties are rejected at every model level.
 
 Feature icons, hero actions, and quote form actions/fields are allowlisted. Features have 3-4
-items; product grids have 1-12 items; quote forms have 1-5 unique fields; testimonial sections
+items; product grids have 1-12 items; quote forms have 1-6 unique fields; testimonial sections
 have 1-8 items. Text has explicit maximum lengths. Image links must be HTTP(S) URLs. Footer
 links must be HTTP(S) URLs or local absolute paths; protocol-relative paths are rejected.
+
+Product items may optionally carry a `data_binding` with the exact shape
+`{"source":"cheersthepure_catalog","entity":"product","key":"product_id|name|capacity","value":"..."}`.
+This is only a constrained lookup request, not proof of catalog data. The server must resolve
+the binding against `Product`/`Inventory` before marking an item
+`data_source:"cheersthepure_database"` or attaching a price/stock value. Unknown binding
+sources, entities, keys, fields, URLs, and executable values are rejected.
 
 ## Product Trust Boundary
 
@@ -38,7 +47,7 @@ business has verified the process and approved the wording.
 ## Safety and Rendering
 
 Validation rejects unknown fields, section types, palette values, unsafe markup-like strings,
-invalid URLs, and overlong collections/content. The schema does not accept HTML, JavaScript,
+invalid URLs, oversized documents, and overlong collections/content. The schema does not accept HTML, JavaScript,
 event handlers, CSS, iframe markup, or server-side code as content. URL fields only accept
 HTTP(S) links or constrained local paths where specified. Never repair malformed model output
 by blindly coercing it; reject it and optionally request a fresh constrained generation.
