@@ -25,6 +25,7 @@ from .provider import (
     WebsiteProviderUnavailable,
     WebsiteProviderSettings,
 )
+from .generation import generate_validated_site, normalize_generation_brief
 from .schemas import SiteSchema
 from .views import _validated_json_object
 
@@ -228,6 +229,107 @@ class WebsiteProviderTests(unittest.TestCase):
             provider.generate_json(messages=[], actor_key="mock-user", max_tokens=20)["model"],
             "mock",
         )
+
+
+class WebsiteGenerationTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.payload = deepcopy(CHEERSTHEPURE_EXAMPLE)
+        self.site_id = str(self.payload["site_id"])
+        self.brief = {
+            "business_description": "A bottled water supplier",
+            "audience": "Hotels and restaurants",
+            "goal": "Collect wholesale inquiries",
+            "visual_direction": "Clean and calm",
+            "requested_sections": ["hero", "product_grid", "quote_form"],
+        }
+
+    def test_valid_generation_returns_validated_schema(self) -> None:
+        provider = MockWebsiteAIProvider({"content": json.dumps(self.payload)})
+        site = generate_validated_site(
+            provider=provider,
+            site_id=self.site_id,
+            brief=self.brief,
+            actor_key="generation-valid",
+        )
+        self.assertEqual(site.site_id, uuid.UUID(self.site_id))
+
+    def test_invalid_json_is_repaired(self) -> None:
+        payload = self.payload
+
+        class RepairProvider:
+            def __init__(self):
+                self.calls = 0
+
+            def generate_json(self, **kwargs):
+                self.calls += 1
+                content = "not json" if self.calls == 1 else json.dumps(payload)
+                return {"content": content}
+
+        provider = RepairProvider()
+        site = generate_validated_site(
+            provider=provider,
+            site_id=self.site_id,
+            brief=self.brief,
+            actor_key="generation-repair",
+        )
+        self.assertEqual(provider.calls, 2)
+        self.assertEqual(site.site_id, uuid.UUID(self.site_id))
+
+    def test_unsupported_requested_section_is_rejected_before_provider(self) -> None:
+        with self.assertRaises(ValueError):
+            normalize_generation_brief({**self.brief, "requested_sections": ["custom_html"]})
+
+    def test_unsafe_link_is_rejected(self) -> None:
+        unsafe = deepcopy(self.payload)
+        unsafe["sections"][4]["links"][0]["url"] = "javascript:alert(1)"
+        provider = MockWebsiteAIProvider({"content": json.dumps(unsafe)})
+        with self.assertRaises(ValidationError):
+            generate_validated_site(
+                provider=provider,
+                site_id=self.site_id,
+                brief=self.brief,
+                actor_key="generation-unsafe",
+                max_repair_attempts=0,
+            )
+
+    def test_missing_field_is_rejected_after_repair_limit(self) -> None:
+        missing = deepcopy(self.payload)
+        del missing["brand"]
+        provider = MockWebsiteAIProvider({"content": json.dumps(missing)})
+        with self.assertRaises(ValidationError):
+            generate_validated_site(
+                provider=provider,
+                site_id=self.site_id,
+                brief=self.brief,
+                actor_key="generation-missing",
+            )
+
+    def test_too_many_sections_is_rejected(self) -> None:
+        oversized = deepcopy(self.payload)
+        oversized["sections"] = oversized["sections"] * 3
+        provider = MockWebsiteAIProvider({"content": json.dumps(oversized)})
+        with self.assertRaises(ValidationError):
+            generate_validated_site(
+                provider=provider,
+                site_id=self.site_id,
+                brief=self.brief,
+                actor_key="generation-sections",
+                max_repair_attempts=0,
+            )
+
+    def test_provider_timeout_is_not_repaired(self) -> None:
+        provider = WebsiteAIProvider(
+            chat=lambda **kwargs: (_ for _ in ()).throw(TimeoutError()),
+            config=WebsiteProviderSettings(rate_limit=10),
+        )
+        with self.assertRaises(WebsiteProviderError) as error:
+            generate_validated_site(
+                provider=provider,
+                site_id=self.site_id,
+                brief=self.brief,
+                actor_key="generation-timeout",
+            )
+        self.assertEqual(error.exception.code, "timeout")
 
 
 class SiteBuilderApiTests(TestCase):

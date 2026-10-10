@@ -29,6 +29,9 @@ frontend build system or use Tailwind CDN. Generated text is rendered with DOM A
 
 - `POST /api/site-builder/generate/` calls Groq, validates the complete `SiteSchema`, and saves
   the result to the authenticated user's account.
+  It accepts `business_description`, `audience`, `goal`, `visual_direction`, and an optional
+  `requested_sections` allowlist; the legacy `prompt` field remains supported as the business
+  description. Invalid model output receives at most two validation-driven repair attempts.
 - `GET|POST /api/site-builder/sites/` lists owned sites or saves a validated site.
 - `GET|PUT /api/site-builder/sites/<uuid>/` loads or updates an owned site.
 - `POST /api/site-builder/refine/` calls Groq for one selected section, validates its schema,

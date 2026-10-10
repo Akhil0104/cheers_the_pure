@@ -16,7 +16,8 @@ from app.account_utils import detect_account_type
 from app.quote_services import IdempotencyConflict, create_quote_request_workflow
 from dispatch import groq_client
 
-from .builder_prompts import GENERATION_SYSTEM_PROMPT, build_section_refine_system_prompt
+from .builder_prompts import build_section_refine_system_prompt
+from .generation import _validated_json_object, generate_validated_site, normalize_generation_brief
 from .models import CreatedWebsite, WebsiteRevision
 from .provider import WebsiteAIProvider, WebsiteProviderError
 from .schemas import InquirySubmission, SECTION_MODELS, SiteSchema
@@ -90,24 +91,6 @@ def _save_site_with_revision(
             created_by=site.owner,
         )
     return revision
-
-
-def _validated_json_object(text: str) -> dict:
-    def reject_duplicate_keys(pairs):
-        result = {}
-        for key, value in pairs:
-            if key in result:
-                raise ValueError(f"The AI response contains a duplicate JSON key: {key}")
-            result[key] = value
-        return result
-
-    try:
-        result = json.loads(text, object_pairs_hook=reject_duplicate_keys)
-    except (json.JSONDecodeError, TypeError, ValueError) as error:
-        raise ValueError("The AI response was not valid JSON. Please try again.") from error
-    if not isinstance(result, dict):
-        raise ValueError("The AI response must be one JSON object.")
-    return result
 
 
 def _has_untrusted_site_data(site: SiteSchema, trusted_site_data: dict | None = None) -> bool:
@@ -228,26 +211,14 @@ def site_detail(request, site_id):
 def generate_site(request):
     try:
         data = _request_json(request)
-        prompt = data.get("prompt", "")
-        if not isinstance(prompt, str) or not prompt.strip() or len(prompt) > 4000:
-            return _json_error("Describe the site in 1-4000 characters.")
+        brief, persisted_prompt = normalize_generation_brief(data)
         site_id = str(uuid.uuid4())
-        user_message = json.dumps(
-            {"site_id": site_id, "request": prompt.strip()},
-            ensure_ascii=False,
-        )
-        completion = WebsiteAIProvider().generate_json(
-            messages=[
-                {"role": "system", "content": GENERATION_SYSTEM_PROMPT},
-                {"role": "user", "content": user_message},
-            ],
+        validated_site = generate_validated_site(
+            provider=WebsiteAIProvider(),
+            site_id=site_id,
+            brief=brief,
             actor_key=f"user:{request.user.pk}",
-            max_tokens=5000,
         )
-        site_data = _validated_json_object(completion.get("content", ""))
-        validated_site = SiteSchema.model_validate(site_data)
-        if str(validated_site.site_id) != site_id:
-            return _json_error("The generated site failed its identity check. Please retry.", 502)
         if _has_untrusted_site_data(validated_site):
             return _json_error("AI output cannot supply live products, prices, or verified testimonials.", 502)
     except (ValueError, ValidationError) as error:
@@ -266,7 +237,7 @@ def generate_site(request):
     site = CreatedWebsite(
         site_id=validated_site.site_id,
         owner=request.user,
-        prompt=prompt.strip(),
+        prompt=persisted_prompt,
     )
     _save_site_with_revision(site, validated_site, WebsiteRevision.Action.GENERATED, {"source": "generate"})
     return JsonResponse({"ok": True, "saved_site": _serialize_site(site)})
