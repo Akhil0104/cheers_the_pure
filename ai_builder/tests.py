@@ -6,6 +6,7 @@ from unittest.mock import patch
 
 from django.core.cache import cache
 from django.core import mail
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase, override_settings
 from django.urls import resolve, reverse
@@ -14,7 +15,7 @@ from pydantic import ValidationError
 from app.models import EmailVerificationToken, QuoteRequest, UserProfile
 
 from .schema_examples import CHEERSTHEPURE_EXAMPLE
-from .models import CreatedWebsite
+from .models import CreatedWebsite, WebsiteRevision
 from .schemas import SiteSchema
 from .views import _validated_json_object
 
@@ -228,6 +229,43 @@ class SiteBuilderApiTests(TestCase):
         response = self.client.get(f"/api/site-builder/sites/{site.site_id}/")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["saved_site"]["site"]["site_name"], "CheersThePure")
+        self.assertTrue(site.slug.startswith("cheersthepure-"))
+        self.assertEqual(site.schema_version, "1.0")
+        self.assertEqual(site.revisions.count(), 1)
+        self.assertEqual(site.revisions.get().action, WebsiteRevision.Action.GENERATED)
+
+    def test_site_slugs_are_collision_safe(self) -> None:
+        first = self.create_saved_site()
+        second_payload = deepcopy(self.payload)
+        second_payload["site_id"] = str(uuid.uuid4())
+        response = self.post_json(
+            "/api/site-builder/sites/",
+            {"site": second_payload, "prompt": "Build another water brand website"},
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        second = CreatedWebsite.objects.get(site_id=response.json()["saved_site"]["site_id"])
+        self.assertNotEqual(first.slug, second.slug)
+        self.assertEqual(second.site_name, first.site_name)
+
+    def test_site_update_creates_immutable_revision_snapshot(self) -> None:
+        site = self.create_saved_site()
+        updated_payload = deepcopy(self.payload)
+        updated_payload["sections"][0]["headline"] = "A revised hydration headline"
+        response = self.client.put(
+            f"/api/site-builder/sites/{site.site_id}/",
+            data=json.dumps({"site": updated_payload}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        revisions = list(site.revisions.order_by("revision_number"))
+        self.assertEqual(len(revisions), 2)
+        self.assertEqual(revisions[0].schema_json["sections"][0]["headline"], self.payload["sections"][0]["headline"])
+        self.assertEqual(revisions[1].schema_json["sections"][0]["headline"], "A revised hydration headline")
+        self.assertEqual(revisions[1].action, WebsiteRevision.Action.INLINE_EDIT)
+        self.assertEqual(revisions[1].schema_version, "1.0")
+        revisions[1].metadata = {"tampered": True}
+        with self.assertRaises(DjangoValidationError):
+            revisions[1].save()
 
     def test_user_cannot_load_another_users_site(self) -> None:
         site = self.create_saved_site()

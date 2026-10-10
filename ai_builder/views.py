@@ -6,6 +6,7 @@ from hashlib import sha256
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
+from django.db import transaction
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
@@ -16,7 +17,7 @@ from app.quote_services import IdempotencyConflict, create_quote_request_workflo
 from dispatch import groq_client
 
 from .builder_prompts import GENERATION_SYSTEM_PROMPT, build_section_refine_system_prompt
-from .models import CreatedWebsite
+from .models import CreatedWebsite, WebsiteRevision
 from .schemas import InquirySubmission, SECTION_MODELS, SiteSchema
 
 logger = logging.getLogger(__name__)
@@ -43,13 +44,46 @@ def _owned_site(request, site_id):
 def _serialize_site(site: CreatedWebsite) -> dict:
     return {
         "site_id": str(site.site_id),
+        "slug": site.slug,
         "site": site.schema_json,
+        "schema_version": site.schema_version,
         "prompt": site.prompt,
         "is_published": site.is_published,
         "share_url": f"/builder/share/{site.share_token}/" if site.is_published else None,
         "created_at": site.created_at.isoformat(),
         "updated_at": site.updated_at.isoformat(),
     }
+
+
+def _save_site_with_revision(
+    site: CreatedWebsite,
+    validated_site: SiteSchema,
+    action: str,
+    metadata: dict | None = None,
+) -> WebsiteRevision:
+    site.site_name = validated_site.site_name
+    site.brand_name = validated_site.brand.name
+    site.theme = validated_site.theme.color
+    site.schema_version = validated_site.schema_version
+    site.schema_json = validated_site.model_dump(mode="json")
+    with transaction.atomic():
+        site.save()
+        previous = (
+            WebsiteRevision.objects.select_for_update()
+            .filter(site=site)
+            .order_by("-revision_number")
+            .first()
+        )
+        revision = WebsiteRevision.objects.create(
+            site=site,
+            revision_number=(previous.revision_number + 1) if previous else 1,
+            schema_version=site.schema_version,
+            schema_json=site.schema_json,
+            action=action,
+            metadata=metadata or {},
+            created_by=site.owner,
+        )
+    return revision
 
 
 def _validated_json_object(text: str) -> dict:
@@ -143,14 +177,16 @@ def site_collection(request):
     if _has_untrusted_site_data(validated_site, site.schema_json if site else None):
         return _json_error("Live product and verified testimonial data must come from trusted backend records.", 400)
 
-    if site is None:
+    is_new_site = site is None
+    if is_new_site:
         site = CreatedWebsite(site_id=site_id, owner=request.user)
     site.prompt = str(data.get("prompt", site.prompt if site.pk else ""))[:10000]
-    site.site_name = validated_site.site_name
-    site.brand_name = validated_site.brand.name
-    site.theme = validated_site.theme.color
-    site.schema_json = validated_site.model_dump(mode="json")
-    site.save()
+    _save_site_with_revision(
+        site,
+        validated_site,
+        WebsiteRevision.Action.GENERATED if is_new_site else WebsiteRevision.Action.INLINE_EDIT,
+        {"source": "site_collection"},
+    )
     return JsonResponse({"ok": True, "saved_site": _serialize_site(site)})
 
 
@@ -172,11 +208,12 @@ def site_detail(request, site_id):
     if _has_untrusted_site_data(validated_site, site.schema_json):
         return _json_error("Live product and verified testimonial data must come from trusted backend records.", 400)
 
-    site.schema_json = validated_site.model_dump(mode="json")
-    site.site_name = validated_site.site_name
-    site.brand_name = validated_site.brand.name
-    site.theme = validated_site.theme.color
-    site.save(update_fields=["schema_json", "site_name", "brand_name", "theme", "updated_at"])
+    _save_site_with_revision(
+        site,
+        validated_site,
+        WebsiteRevision.Action.INLINE_EDIT,
+        {"source": "site_detail"},
+    )
     return JsonResponse({"ok": True, "saved_site": _serialize_site(site)})
 
 
@@ -217,15 +254,12 @@ def generate_site(request):
         logger.exception("Website generation failed")
         return _json_error("Website generation failed. Please try again.", 502)
 
-    site = CreatedWebsite.objects.create(
+    site = CreatedWebsite(
         site_id=validated_site.site_id,
         owner=request.user,
         prompt=prompt.strip(),
-        site_name=validated_site.site_name,
-        brand_name=validated_site.brand.name,
-        theme=validated_site.theme.color,
-        schema_json=validated_site.model_dump(mode="json"),
     )
+    _save_site_with_revision(site, validated_site, WebsiteRevision.Action.GENERATED, {"source": "generate"})
     return JsonResponse({"ok": True, "saved_site": _serialize_site(site)})
 
 
@@ -284,11 +318,12 @@ def refine_section(request):
         logger.exception("Section refinement failed")
         return _json_error("Section update failed. Please try again.", 502)
 
-    site.schema_json = validated_site.model_dump(mode="json")
-    site.site_name = validated_site.site_name
-    site.brand_name = validated_site.brand.name
-    site.theme = validated_site.theme.color
-    site.save(update_fields=["schema_json", "site_name", "brand_name", "theme", "updated_at"])
+    _save_site_with_revision(
+        site,
+        validated_site,
+        WebsiteRevision.Action.SECTION_REFINE,
+        {"source": "refine_section", "section_id": section_id},
+    )
     return JsonResponse({"ok": True, "section": site.schema_json["sections"][section_index]})
 
 

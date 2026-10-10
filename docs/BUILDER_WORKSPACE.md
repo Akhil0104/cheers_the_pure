@@ -22,6 +22,9 @@ frontend build system or use Tailwind CDN. Generated text is rendered with DOM A
   and persists only that section replacement.
 - `POST /api/site-builder/sites/<uuid>/publish/` enables read-only access through a random
   share-token URL.
+- Saved sites have a collision-safe slug and persisted schema version. Every successful
+  generation, inline save, or section refinement creates an immutable `WebsiteRevision`
+  snapshot with an action label and safe metadata.
 - `POST /api/v1/inquiry/submit/` validates a B2B inquiry, then uses the shared quote workflow
    to create a pending `QuoteRequest`, email-verification token, and verification message. The
    browser displays confirmation only after persistence returns the real quote ID.
@@ -33,6 +36,25 @@ submission is disabled there; inquiries remain available from the signed-in buil
 The inquiry API additionally requires a B2B or staff account, an idempotency UUID, and is limited
 to five submissions per user/IP per ten minutes. Configure a shared Django cache backend in
 multi-worker production deployments; the local development default is process-local.
+
+## Persistence migration
+
+The builder persistence migration adds `CreatedWebsite.slug`, `CreatedWebsite.schema_version`,
+and the `WebsiteRevision` table. It backfills existing sites with collision-safe migration
+slugs and one `generated` snapshot of each current validated schema. It does not alter
+products, inventory, quotes, orders, payments, or customer records.
+
+Inspect and apply it safely from the repository root:
+
+```powershell
+python manage.py makemigrations ai_builder --check --dry-run
+python manage.py migrate --plan
+python manage.py migrate ai_builder
+```
+
+The first two commands are read-only. Before applying the final command in a shared or
+production environment, take the normal database backup and schedule the schema change. Never
+reset or recreate the database to apply this migration.
 
 ## Automated checks
 
