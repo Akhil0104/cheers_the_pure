@@ -30,7 +30,7 @@ MAX_RETRIES = 3
 RETRY_DELAY_BASE = 1.0           # seconds, doubles on each retry
 
 
-def _get_client():
+def _get_client(timeout: float | None = None):
     """Lazily import and configure the Groq client."""
     from .config import get_groq_api_key, is_groq_configured
 
@@ -47,7 +47,10 @@ def _get_client():
         )
 
     api_key = get_groq_api_key()
-    return Groq(api_key=api_key)
+    client_options = {'api_key': api_key}
+    if timeout is not None:
+        client_options['timeout'] = timeout
+    return Groq(**client_options)
 
 
 # ── Public API ────────────────────────────────────────────────────────────────
@@ -58,6 +61,7 @@ def chat(
     temperature: float = DEFAULT_TEMPERATURE,
     max_tokens: int = DEFAULT_MAX_TOKENS,
     stream: bool = False,
+    timeout: float | None = None,
 ) -> dict:
     """
     Send a chat completion request to Groq (non-streaming).
@@ -79,7 +83,7 @@ def chat(
     Raises:
         RuntimeError on unrecoverable errors after retries.
     """
-    client = _get_client()
+    client = _get_client(timeout=timeout)
 
     for attempt in range(1, MAX_RETRIES + 1):
         start_ms = int(time.time() * 1000)

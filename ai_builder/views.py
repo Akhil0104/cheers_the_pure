@@ -18,6 +18,7 @@ from dispatch import groq_client
 
 from .builder_prompts import GENERATION_SYSTEM_PROMPT, build_section_refine_system_prompt
 from .models import CreatedWebsite, WebsiteRevision
+from .provider import WebsiteAIProvider, WebsiteProviderError
 from .schemas import InquirySubmission, SECTION_MODELS, SiteSchema
 
 logger = logging.getLogger(__name__)
@@ -25,6 +26,11 @@ logger = logging.getLogger(__name__)
 
 def _json_error(message: str, status: int = 400) -> JsonResponse:
     return JsonResponse({"ok": False, "error": message}, status=status)
+
+
+def _provider_error(error: WebsiteProviderError) -> JsonResponse:
+    status = 429 if error.code == "rate_limited" else 503 if error.code == "provider_unavailable" else 502
+    return _json_error(str(error), status)
 
 
 def _request_json(request) -> dict:
@@ -230,12 +236,12 @@ def generate_site(request):
             {"site_id": site_id, "request": prompt.strip()},
             ensure_ascii=False,
         )
-        completion = groq_client.chat(
+        completion = WebsiteAIProvider().generate_json(
             messages=[
                 {"role": "system", "content": GENERATION_SYSTEM_PROMPT},
                 {"role": "user", "content": user_message},
             ],
-            temperature=0.2,
+            actor_key=f"user:{request.user.pk}",
             max_tokens=5000,
         )
         site_data = _validated_json_object(completion.get("content", ""))
@@ -247,6 +253,9 @@ def generate_site(request):
     except (ValueError, ValidationError) as error:
         message = error.errors(include_context=False) if isinstance(error, ValidationError) else str(error)
         return JsonResponse({"ok": False, "error": message}, status=502)
+    except WebsiteProviderError as error:
+        logger.warning("Website generation provider failure: %s", error.code)
+        return _provider_error(error)
     except RuntimeError as error:
         logger.warning("Website generation unavailable: %s", error)
         return _json_error("Website generation is unavailable. Check the Groq configuration and try again.", 503)
@@ -280,7 +289,7 @@ def refine_section(request):
         if section_index is None:
             return _json_error("Section not found.", 404)
         current_section = site.schema_json["sections"][section_index]
-        completion = groq_client.chat(
+        completion = WebsiteAIProvider().generate_json(
             messages=[
                 {"role": "system", "content": build_section_refine_system_prompt(current_section["type"])},
                 {
@@ -291,7 +300,7 @@ def refine_section(request):
                     ),
                 },
             ],
-            temperature=0.2,
+            actor_key=f"user:{request.user.pk}",
             max_tokens=2000,
         )
         replacement = _validated_json_object(completion.get("content", ""))
@@ -311,6 +320,9 @@ def refine_section(request):
         return JsonResponse({"ok": False, "error": message}, status=502)
     except CreatedWebsite.DoesNotExist:
         return _json_error("Site not found.", 404)
+    except WebsiteProviderError as error:
+        logger.warning("Section refinement provider failure: %s", error.code)
+        return _provider_error(error)
     except RuntimeError as error:
         logger.warning("Section refinement unavailable: %s", error)
         return _json_error("Section refinement is unavailable. Check the Groq configuration and try again.", 503)

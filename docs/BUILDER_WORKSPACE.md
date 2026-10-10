@@ -8,6 +8,19 @@
 2. Apply the site-builder migration with `python manage.py migrate`.
 3. Sign into the Django application and open `/builder/`.
 
+The provider is configured server-side through these optional settings:
+
+- `SAASSUM_GROQ_TIMEOUT_SECONDS` (default `30`)
+- `SAASSUM_GROQ_MAX_OUTPUT_CHARS` (default `50000`)
+- `SAASSUM_GROQ_RATE_LIMIT` (default `10` requests)
+- `SAASSUM_GROQ_RATE_WINDOW_SECONDS` (default `60` seconds)
+
+The provider caps requested completion tokens at 5,000, applies the configured timeout, and
+uses the Django cache for per-actor rate limiting. Timeout, provider, malformed-response, and
+oversized-output failures return recoverable UI errors without exposing credentials or raw
+provider responses. Tests and local deterministic demonstrations may use the mock provider;
+production requests require a configured server-side Groq key.
+
 The workspace uses the existing Django template and static-file stack. It does not add a second
 frontend build system or use Tailwind CDN. Generated text is rendered with DOM APIs and
 `textContent`; it is not inserted as trusted HTML.

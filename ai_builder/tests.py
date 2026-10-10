@@ -16,6 +16,15 @@ from app.models import EmailVerificationToken, QuoteRequest, UserProfile
 
 from .schema_examples import CHEERSTHEPURE_EXAMPLE
 from .models import CreatedWebsite, WebsiteRevision
+from .provider import (
+    MockWebsiteAIProvider,
+    WebsiteAIProvider,
+    WebsiteProviderError,
+    WebsiteProviderMalformedResponse,
+    WebsiteProviderRateLimited,
+    WebsiteProviderUnavailable,
+    WebsiteProviderSettings,
+)
 from .schemas import SiteSchema
 from .views import _validated_json_object
 
@@ -154,6 +163,73 @@ class SiteSchemaTests(unittest.TestCase):
             _validated_json_object('{"site_name":"first","site_name":"second"}')
 
 
+class WebsiteProviderTests(unittest.TestCase):
+    def setUp(self) -> None:
+        cache.clear()
+        self.config = WebsiteProviderSettings(
+            timeout_seconds=2,
+            max_output_chars=100,
+            rate_limit=2,
+            rate_window_seconds=60,
+        )
+
+    @patch("ai_builder.provider.is_groq_configured", return_value=True)
+    def test_successful_output_is_bounded(self, configured) -> None:
+        provider = WebsiteAIProvider(
+            chat=lambda **kwargs: {"content": '{"sections":[]}', "model": "test"},
+            config=self.config,
+        )
+        response = provider.generate_json(messages=[], actor_key="test-user", max_tokens=20)
+        self.assertEqual(response["content"], '{"sections":[]}')
+
+    @patch("ai_builder.provider.is_groq_configured", return_value=True)
+    def test_timeout_is_recoverable(self, configured) -> None:
+        provider = WebsiteAIProvider(chat=lambda **kwargs: (_ for _ in ()).throw(TimeoutError()), config=self.config)
+        with self.assertRaises(WebsiteProviderError) as raised:
+            provider.generate_json(messages=[], actor_key="timeout-user", max_tokens=20)
+        self.assertEqual(raised.exception.code, "timeout")
+
+    @patch("ai_builder.provider.is_groq_configured", return_value=True)
+    def test_provider_failure_is_recoverable(self, configured) -> None:
+        provider = WebsiteAIProvider(
+            chat=lambda **kwargs: (_ for _ in ()).throw(RuntimeError("upstream failed")),
+            config=self.config,
+        )
+        with self.assertRaises(WebsiteProviderError) as raised:
+            provider.generate_json(messages=[], actor_key="failure-user", max_tokens=20)
+        self.assertEqual(raised.exception.code, "provider_error")
+
+    @patch("ai_builder.provider.is_groq_configured", return_value=True)
+    def test_malformed_output_is_rejected(self, configured) -> None:
+        provider = WebsiteAIProvider(chat=lambda **kwargs: {"content": ""}, config=self.config)
+        with self.assertRaises(WebsiteProviderMalformedResponse):
+            provider.generate_json(messages=[], actor_key="malformed-user", max_tokens=20)
+
+    @patch("ai_builder.provider.is_groq_configured", return_value=False)
+    def test_missing_configuration_is_recoverable(self, configured) -> None:
+        provider = WebsiteAIProvider(config=self.config)
+        with self.assertRaises(WebsiteProviderUnavailable):
+            provider.generate_json(messages=[], actor_key="missing-user", max_tokens=20)
+
+    @patch("ai_builder.provider.is_groq_configured", return_value=True)
+    def test_rate_limit_is_enforced(self, configured) -> None:
+        provider = WebsiteAIProvider(
+            chat=lambda **kwargs: {"content": "{}", "model": "test"},
+            config=self.config,
+        )
+        provider.generate_json(messages=[], actor_key="limited-user", max_tokens=20)
+        provider.generate_json(messages=[], actor_key="limited-user", max_tokens=20)
+        with self.assertRaises(WebsiteProviderRateLimited):
+            provider.generate_json(messages=[], actor_key="limited-user", max_tokens=20)
+
+    def test_mock_provider_never_requires_configuration(self) -> None:
+        provider = MockWebsiteAIProvider({"content": "{}", "model": "mock"})
+        self.assertEqual(
+            provider.generate_json(messages=[], actor_key="mock-user", max_tokens=20)["model"],
+            "mock",
+        )
+
+
 class SiteBuilderApiTests(TestCase):
     def setUp(self) -> None:
         cache.clear()
@@ -273,6 +349,7 @@ class SiteBuilderApiTests(TestCase):
         response = self.client.get(f"/api/site-builder/sites/{site.site_id}/")
         self.assertEqual(response.status_code, 404)
 
+    @override_settings(GROQ_API_KEY="gsk_test_builder")
     @patch("ai_builder.views.groq_client.chat")
     def test_refine_updates_only_selected_section(self, groq_chat) -> None:
         site = self.create_saved_site()
@@ -483,6 +560,7 @@ class SiteBuilderApiTests(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(CreatedWebsite.objects.count(), 0)
 
+    @override_settings(GROQ_API_KEY="gsk_test_builder")
     @patch("ai_builder.views.groq_client.chat")
     def test_generation_cannot_claim_trusted_catalog_price(self, groq_chat) -> None:
         product = self.payload["sections"][2]["items"][0]
